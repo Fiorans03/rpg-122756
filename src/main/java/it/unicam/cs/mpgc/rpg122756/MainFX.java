@@ -1823,30 +1823,27 @@ public class MainFX extends Application {
         updateDialog();
     }
 
-    // ✅ NUOVO METODO HELPER: Gestisce la logica di vittoria per evitare
-    // duplicazioni di codice
     private void processMonsterVictory() {
+        int room = currentRoom - 1;
+
+        // 1. Logica specifica del Boss (Respawn)
         if (currentMonster.isBoss()) {
             bossDefeatedTimes.put(currentRoom, System.currentTimeMillis());
             engine.addMessage("⏰ Il boss impiegherà " + BOSS_RESPAWN_MINUTES + " minuti per rigenerarsi...");
         }
 
-        List<Item> drops = currentMonster.dropItems();
+        // 2. Delega a CombatSystem la gestione di Drop, Inventario e XP
+        List<Item> drops = combatSystem.processVictory(engine.getAlchemist(), engine.getAlchemyBook(), currentMonster);
+
+        // 3. Mostra a schermo cosa ha droppato
         if (!drops.isEmpty()) {
             engine.addMessage("Il mostro ha droppato:");
             for (Item drop : drops) {
-                if (engine.getAlchemist().getInventory().addItem(drop)) {
-                    engine.addMessage("  + " + drop.getName());
-                    if (drop instanceof Ingredient) {
-                        engine.getAlchemyBook().discoverIngredient(drop.getName());
-                    }
-                } else {
-                    engine.addMessage("  - " + drop.getName() + " (inventario pieno!)");
-                }
+                engine.addMessage("  + " + drop.getName());
             }
         }
 
-        int room = currentRoom - 1;
+        // 4. Aggiorna la mappa (rimuovi il mostro)
         if (currentMonster.isBoss()) {
             currentMap[room][playerX][playerY] = TileConstants.TILE_PATH;
         } else {
@@ -1855,16 +1852,13 @@ public class MainFX extends Application {
         monsters[room][playerX][playerY] = null;
         monsterNames[room][playerX][playerY] = null;
 
+        // 5. Aggiorna l'interfaccia grafica
         drawGrid();
-        int xpGained = currentMonster.getXpReward();
-        engine.getAlchemist().addExperience(xpGained);
-        engine.addMessage("Hai guadagnato " + xpGained + " XP!");
-
         switchToExplorationMode();
         updateStats();
         updateDialog();
 
-        // Controllo level up ritardato
+        // 6. Controllo Level Up ritardato di 2 secondi
         Timeline delay = new Timeline(new KeyFrame(Duration.seconds(2), e -> checkPendingLevelUp()));
         delay.setCycleCount(1);
         delay.play();
@@ -1873,6 +1867,7 @@ public class MainFX extends Application {
     private void handleUsePotion(Potion potion) {
         Alchemist alchemist = engine.getAlchemist();
 
+        // 1. Controllo AP
         if (alchemist.getAp() < potion.getApCost()) {
             engine.addMessage("❌ AP insufficienti per " + potion.getName() + "! (Costo: " + potion.getApCost() + ")");
             updateDialog();
@@ -1881,6 +1876,7 @@ public class MainFX extends Application {
             return;
         }
 
+        // 2. Verifica bersaglio
         if (currentMonster == null) {
             currentMonster = monsters[currentRoom - 1][playerX][playerY];
         }
@@ -1891,8 +1887,8 @@ public class MainFX extends Application {
             return;
         }
 
+        // 3. Esecuzione effetto pozione
         int result = engine.getCombatSystem().usePotion(alchemist, potion, currentMonster);
-
         if (result == -1) {
             engine.addMessage("❌ Errore nell'uso della pozione (AP insufficienti o effetto non valido)!");
             updateDialog();
@@ -1901,13 +1897,13 @@ public class MainFX extends Application {
             return;
         }
 
-        // Rimuovi una singola istanza della pozione dall'inventario
+        // 4. Rimuovi la pozione dall'inventario
         alchemist.getInventory().getItems().stream()
                 .filter(i -> i.getName().equals(potion.getName()))
                 .findFirst()
                 .ifPresent(i -> alchemist.getInventory().removeItem(i));
 
-        // Messaggio di successo in base al tipo di effetto
+        // 5. Messaggio di successo (✅ PULITO: senza duplicazioni!)
         if (potion.getEffect().getType() == PotionEffect.EffectType.HEAL) {
             engine.addMessage(
                     "💚 Usi " + potion.getName() + "! Recuperi " + potion.getEffect().getMagnitude() + " HP!");
@@ -1915,80 +1911,28 @@ public class MainFX extends Application {
         } else if (potion.getEffect().getType() == PotionEffect.EffectType.DAMAGE) {
             engine.addMessage("🧪 Lanci " + potion.getName() + " su " + currentMonster.getName() + "! Infliggi "
                     + result + " danni!");
-        } else {
-            engine.addMessage("🧪 Usi " + potion.getName() + "! Effetto applicato con successo.");
-        }
-
-        if (potion.getEffect().getType() == PotionEffect.EffectType.ANALYZE) {
+        } else if (potion.getEffect().getType() == PotionEffect.EffectType.ANALYZE) {
             engine.addMessage("✨ Usi Occulus Veritatis su " + currentMonster.getName() + "!");
             engine.addMessage("🔍 DEBOLEZZA SCOPERTA: " + getElementEmoji(currentMonster.getWeakness()) + " "
                     + currentMonster.getWeakness());
             engine.addMessage("🛡️ RESISTENZA SCOPERTA: " + getElementEmoji(currentMonster.getResistance()) + " "
                     + currentMonster.getResistance());
             engine.addMessage("📖 Registrato nel Bestiario!");
-        } else if (potion.getEffect().getType() == PotionEffect.EffectType.HEAL) {
-            engine.addMessage(
-                    "💚 Usi " + potion.getName() + "! Recuperi " + potion.getEffect().getMagnitude() + " HP!");
-        } else if (potion.getEffect().getType() == PotionEffect.EffectType.DAMAGE) {
-            engine.addMessage("🧪 Lanci " + potion.getName() + " su " + currentMonster.getName() + "! Infliggi "
-                    + result + " danni!");
         } else {
-            engine.addMessage("🧪 Usi " + potion.getName() + "! Effetto applicato.");
+            engine.addMessage("🧪 Usi " + potion.getName() + "! Effetto applicato con successo.");
         }
 
-        // Controllo morte mostro
+        // 6. Controllo morte mostro (✅ SOSTITUITO IL BLOCCO GIGANTE CON 3 RIGHE PULITE)
         if (currentMonster.isDead()) {
-            engine.addMessage("🎉 Hai sconfitto " + currentMonster.getName() + "!");
+            engine.addMessage("🎉 Hai sconfitto " + currentMonster.getName() + " con la pozione!");
 
-            if (currentMonster.isBoss()) {
-                bossDefeatedTimes.put(currentRoom, System.currentTimeMillis());
-                engine.addMessage("⏰ Il boss impiegherà " + BOSS_RESPAWN_MINUTES + " minuti per rigenerarsi...");
-            }
+            closeOverlay(); // Chiude il menu pozioni
+            processMonsterVictory(); // Delega la logica di drop, XP e mappa al metodo unico
 
-            List<Item> drops = currentMonster.dropItems();
-            if (!drops.isEmpty()) {
-                engine.addMessage("Il mostro ha droppato:");
-                for (Item drop : drops) {
-                    if (engine.getAlchemist().getInventory().addItem(drop)) {
-                        engine.addMessage("  + " + drop.getName());
-                        if (drop instanceof Ingredient)
-                            engine.getAlchemyBook().discoverIngredient(drop.getName());
-                    } else {
-                        engine.addMessage("  - " + drop.getName() + " (inventario pieno!)");
-                    }
-                }
-            }
-
-            if (!currentMonster.isBoss()) {
-                int room = currentRoom - 1;
-                monsters[room][playerX][playerY] = null;
-                monsterNames[room][playerX][playerY] = null;
-                currentMap[room][playerX][playerY] = TileConstants.TILE_GRASS;
-            } else {
-                int room = currentRoom - 1;
-                currentMap[room][playerX][playerY] = TileConstants.TILE_PATH;
-                monsterNames[room][playerX][playerY] = null;
-                monsters[room][playerX][playerY] = null;
-            }
-
-            drawGrid();
-            int xpGained = currentMonster.getXpReward();
-            engine.getAlchemist().addExperience(xpGained);
-            engine.addMessage("Hai guadagnato " + xpGained + " XP!");
-
-            // ✅ Chiudi l'overlay e passa a esplorazione
-            closeOverlay();
-            switchToExplorationMode();
-            updateStats();
-            updateDialog();
-
-            Timeline delay = new Timeline(new KeyFrame(Duration.seconds(2), e -> checkPendingLevelUp()));
-            delay.setCycleCount(1);
-            delay.play();
             return; // Esci, non mostrare il menu delle pozioni se il mostro è morto
         }
 
-        // Il mostro è vivo, contrattacca!
+        // 7. Il mostro è vivo, contrattacca!
         int damageTaken = engine.getCombatSystem().monsterAttack(currentMonster, alchemist);
         engine.addMessage(currentMonster.getName() + " contrattacca! Subisci " + damageTaken + " danni.");
         engine.addMessage("I tuoi HP: " + alchemist.getHp() + "/" + alchemist.getMaxHp());
@@ -1999,9 +1943,9 @@ public class MainFX extends Application {
             return;
         }
 
+        // 8. Aggiorna UI e riapri il menu pozioni
         updateStats();
         updateDialog();
-
         handleShowPotions();
     }
 
@@ -2315,44 +2259,20 @@ public class MainFX extends Application {
     private void handleDeath() {
         dialogArea.clear();
 
-        // 1. Dimezzamento del livello (minimo 1)
-        int currentLevel = engine.getAlchemist().getLevel();
-        int newLevel = Math.max(1, currentLevel / 2);
-        engine.getAlchemist().setLevel(newLevel);
+        // 1. Delega a GameEngine la logica di gioco (penalità, reset stats, messaggi)
+        engine.handlePlayerDeath();
 
-        // Reset totale degli XP per il nuovo livello
-        engine.getAlchemist().setExperience(0);
-
-        // Spegne qualsiasi flag di level-up pendente
-        engine.getAlchemist().consumeOneLevelUp();
-
-        // 2. Perdita di TUTTI gli oggetti e rigenerazione completa
-        engine.getAlchemist().getInventory().clear();
-        engine.getAlchemist().setHp(engine.getAlchemist().getMaxHp());
-        engine.getAlchemist().setAp(engine.getAlchemist().getMaxAp());
-
-        // 3. Teletrasporto all'inizio (Stanza 1)
+        // 2. Reset della posizione e dello stato di combattimento (Logica UI)
         currentRoom = 1;
         playerX = 7;
         playerY = 13;
-
-        // 4. Reset COMPLETO dello stato di combattimento
         inCombat = false;
         currentMonster = null;
 
-        // 5. Aggiornamento UI
+        // 3. Aggiornamento dell'interfaccia grafica
         switchToExplorationMode();
         drawGrid();
         updateStats();
-
-        // 6. Messaggi di sconfitta
-        engine.addMessage("☠️ SEI STATO SCONFITTO! ☠️");
-        engine.addMessage("Ti risvegli all'ingresso del dungeon, stordito ma vivo.");
-        engine.addMessage(
-                "Hai perso tutti i tuoi oggetti e il tuo livello è stato dimezzato (Livello " + newLevel + ").");
-        engine.addMessage(
-                "I tuoi poteri appresi sono intatti, ma la tua esperienza è azzerata. Riconquista la tua forza.");
-
         updateDialog();
     }
 

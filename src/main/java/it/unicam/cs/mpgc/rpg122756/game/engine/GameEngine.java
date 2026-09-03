@@ -17,13 +17,13 @@ public class GameEngine {
     private final AlchemyBook alchemyBook;
     private final CombatSystem combatSystem;
     private final SaveManager saveManager;
-    
+
     private final Queue<String> messageLog;
     private boolean isGameOver;
     private boolean isGameWon;
 
-    public GameEngine(Alchemist alchemist, Dungeon dungeon, AlchemyBook alchemyBook, 
-                      CombatSystem combatSystem, SaveManager saveManager) {
+    public GameEngine(Alchemist alchemist, Dungeon dungeon, AlchemyBook alchemyBook,
+            CombatSystem combatSystem, SaveManager saveManager) {
         this.alchemist = alchemist;
         this.dungeon = dungeon;
         this.alchemyBook = alchemyBook;
@@ -34,26 +34,67 @@ public class GameEngine {
         this.isGameWon = false;
     }
 
-    public boolean isCombatActive() { return dungeon.getCurrentRoom().hasMonster(); }
-    
-    public void addMessage(String message) { 
-        messageLog.add(message); 
+    public boolean isCombatActive() {
+        return dungeon.getCurrentRoom().hasMonster();
     }
-    
-    public Queue<String> getMessageLog() { 
-        return messageLog; 
+
+    public void addMessage(String message) {
+        messageLog.add(message);
     }
-    
-    public Alchemist getAlchemist() { return alchemist; }
-    public Dungeon getDungeon() { return dungeon; }
-    public AlchemyBook getAlchemyBook() { return alchemyBook; }
-    public CombatSystem getCombatSystem() { return combatSystem; }
-    public boolean isGameOver() { return isGameOver; }
-    public boolean isGameWon() { return isGameWon; }
+
+    public Queue<String> getMessageLog() {
+        return messageLog;
+    }
+
+    public Alchemist getAlchemist() {
+        return alchemist;
+    }
+
+    public Dungeon getDungeon() {
+        return dungeon;
+    }
+
+    public AlchemyBook getAlchemyBook() {
+        return alchemyBook;
+    }
+
+    public CombatSystem getCombatSystem() {
+        return combatSystem;
+    }
+
+    public boolean isGameOver() {
+        return isGameOver;
+    }
+
+    public boolean isGameWon() {
+        return isGameWon;
+    }
 
     public void saveGame(String filePath) {
-        GameState state = new GameState(alchemist, alchemyBook.getDiscoveredIngredients(), 
-                                        dungeon.getCurrentLevelNumber() - 1, dungeon.getCurrentRoom().getId());
+        GameState state = new GameState(alchemist, alchemyBook.getDiscoveredIngredients(),
+                dungeon.getCurrentLevelNumber() - 1, dungeon.getCurrentRoom().getId());
         saveManager.save(state, filePath);
     }
+
+    // ==========================================
+    // GESTIONE MORTE DEL GIOCATORE (Estratta da MainFX)
+    // ==========================================
+    public void handlePlayerDeath() {
+        int currentLevel = alchemist.getLevel();
+        int newLevel = Math.max(1, currentLevel / 2);
+
+        alchemist.setLevel(newLevel);
+        alchemist.setExperience(0);
+        alchemist.consumeOneLevelUp();
+
+        alchemist.getInventory().clear();
+        alchemist.setHp(alchemist.getMaxHp());
+        alchemist.setAp(alchemist.getMaxAp());
+
+        addMessage("☠️ SEI STATO SCONFITTO! ☠️");
+        addMessage("Ti risvegli all'ingresso del dungeon, stordito ma vivo.");
+        addMessage("Hai perso tutti i tuoi oggetti e il tuo livello è stato dimezzato (Livello " + newLevel + ").");
+        addMessage("I tuoi poteri appresi sono intatti, ma la tua esperienza è azzerata. Riconquista la tua forza.");
+    }
+
 }

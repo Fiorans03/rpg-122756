@@ -2,9 +2,11 @@ package it.unicam.cs.mpgc.rpg122756.game.combat;
 
 import it.unicam.cs.mpgc.rpg122756.model.entities.Alchemist;
 import it.unicam.cs.mpgc.rpg122756.model.entities.Monster;
+import it.unicam.cs.mpgc.rpg122756.model.items.Ingredient;
 import it.unicam.cs.mpgc.rpg122756.model.items.Item;
 import it.unicam.cs.mpgc.rpg122756.model.items.Potion;
 import it.unicam.cs.mpgc.rpg122756.model.items.PotionEffect;
+import it.unicam.cs.mpgc.rpg122756.model.crafting.AlchemyBook;
 import it.unicam.cs.mpgc.rpg122756.model.entities.ActiveEffect;
 import java.util.List;
 import java.util.Random;
@@ -154,5 +156,19 @@ public class CombatSystem {
         }
 
         return log.toString().trim();
+    }
+
+    public List<Item> processVictory(Alchemist alchemist, AlchemyBook book, Monster monster) {
+        List<Item> drops = monster.dropItems();
+        
+        for (Item drop : drops) {
+            alchemist.getInventory().addItem(drop);
+            if (drop instanceof Ingredient) {
+                book.discoverIngredient(drop.getName());
+            }
+        }
+        
+        alchemist.addExperience(monster.getXpReward());
+        return drops;
     }
 }
