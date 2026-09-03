@@ -4,6 +4,7 @@ import it.unicam.cs.mpgc.rpg122756.game.combat.CombatSystem;
 import it.unicam.cs.mpgc.rpg122756.game.engine.GameEngine;
 import it.unicam.cs.mpgc.rpg122756.game.world.DungeonBuilder;
 import it.unicam.cs.mpgc.rpg122756.game.world.MapLayoutBuilder;
+import it.unicam.cs.mpgc.rpg122756.game.world.NavigationManager;
 import it.unicam.cs.mpgc.rpg122756.model.crafting.AlchemyBook;
 import it.unicam.cs.mpgc.rpg122756.model.crafting.Recipe;
 import it.unicam.cs.mpgc.rpg122756.model.crafting.RecipeDatabase;
@@ -100,6 +101,7 @@ public class MainFX extends Application {
     private ThemeManager themeManager = new ThemeManager();
     private MapLayoutBuilder mapLayoutBuilder;
     private RecipeDatabase recipeDatabase;
+    private NavigationManager navigationManager = new NavigationManager();
 
     @Override
     public void start(Stage primaryStage) {
@@ -2025,64 +2027,35 @@ public class MainFX extends Application {
             // 1. GESTIONE PORTE NORMALI
             // ==========================================
             if (targetTile == TileConstants.TILE_DOOR) {
-                // --- LIVELLO 1: FORESTA ---
-                if (currentRoom == 1 && direction.equals("nord")) {
-                    changeRoom(2, 7, 12);
-                    return;
-                } else if (currentRoom == 2 && direction.equals("sud")) {
-                    changeRoom(1, 7, 2);
-                    return;
-                } else if (currentRoom == 2 && direction.equals("nord")) {
-                    showBossEntranceConfirmation(3, 7, 12);
-                    return;
-                }
+                NavigationManager.MoveResult result = navigationManager.handleDoor(
+                        currentRoom, direction, monsters, bossDefeatedTimes);
 
-                // --- LIVELLO 2: CAVERNE ---
-                else if (currentRoom == 4 && direction.equals("sud")) {
-                    engine.addMessage("🚪 Ritorni verso la tana del Guardiano...");
-                    changeRoom(3, 7, 2);
-                    return;
-                } else if (currentRoom == 4 && direction.equals("nord")) {
-                    engine.addMessage("🚪 Prosegui nelle profondità delle Caverne Umide...");
-                    changeRoom(5, 7, 12);
-                    return;
-                } else if (currentRoom == 5 && direction.equals("sud")) {
-                    engine.addMessage("🚪 Torni indietro verso l'ingresso delle Caverne...");
-                    changeRoom(4, 7, 2);
-                    return;
-                } else if (currentRoom == 5 && direction.equals("nord")) {
-                    showBossEntranceConfirmation(6, 7, 12);
-                    return;
-                }
+                switch (result) {
+                    case ROOM_CHANGE:
+                        if (!navigationManager.getMessage().isEmpty()) {
+                            engine.addMessage(navigationManager.getMessage());
+                        }
+                        changeRoom(navigationManager.getTargetRoom(),
+                                navigationManager.getTargetX(),
+                                navigationManager.getTargetY());
+                        return;
 
-                // --- LIVELLO 3: PALUDE ---
-                else if (currentRoom == 7 && direction.equals("nord")) {
-                    engine.addMessage("🚪 Prosegui nel cuore della Palude...");
-                    changeRoom(8, 7, 12);
-                    return;
-                } else if (currentRoom == 7 && direction.equals("sud")) {
-                    engine.addMessage("🚪 Torni indietro verso le Caverne...");
-                    changeRoom(6, 7, 12);
-                    return;
-                } else if (currentRoom == 8 && direction.equals("sud")) {
-                    engine.addMessage("🚪 Torni verso l'ingresso della Palude...");
-                    changeRoom(7, 7, 2);
-                    return;
-                } else if (currentRoom == 8 && direction.equals("nord")) {
-                    showBossEntranceConfirmation(9, 7, 12);
-                    return;
-                } else if (currentRoom == 9 && direction.equals("sud")) {
-                    int bossX = 7;
-                    int bossY = 4;
+                    case BOSS_CONFIRMATION:
+                        showBossEntranceConfirmation(navigationManager.getTargetRoom(),
+                                navigationManager.getTargetX(),
+                                navigationManager.getTargetY());
+                        return;
 
-                    if (monsters[8][bossX][bossY] != null && !monsters[8][bossX][bossY].isDead()) {
-                        engine.addMessage("🔒 L'aura del Basilisco blocca la fuga! Sconfiggilo per aprire l'uscita!");
-                    } else {
-                        engine.addMessage("🚪 Il Basilisco è stato sconfitto! La via di fuga è aperta.");
-                        changeRoom(8, 7, 2);
-                    }
-                    updateDialog();
-                    return;
+                    case BLOCKED_EXIT:
+                        engine.addMessage(navigationManager.getMessage());
+                        updateDialog();
+                        return;
+
+                    case NORMAL_MOVE:
+                    case HIDDEN_DOOR:
+                    case BLOCKED:
+                        // Non dovrebbero succedere per TILE_DOOR, ma li gestiamo per completezza
+                        break;
                 }
             }
 
@@ -2090,52 +2063,28 @@ public class MainFX extends Application {
             // 2. GESTIONE PORTE NASCOSTE
             // ==========================================
             else if (targetTile == TileConstants.TILE_HIDDEN_DOOR) {
-                int bossX = 7;
-                int bossY = 4;
+                NavigationManager.MoveResult result = navigationManager.handleHiddenDoor(
+                        currentRoom, direction, monsters, bossDefeatedTimes);
 
-                if (currentRoom == 3 && direction.equals("sud")) {
-                    if (monsters[2][bossX][bossY] != null && !monsters[2][bossX][bossY].isDead()) {
-                        engine.addMessage("🔒 Impossibile fuggire, un'aura schiacciante vieta la fuga!");
-                    } else {
-                        engine.addMessage("🚪 L'aura oscura è svanita. La via del ritorno è aperta.");
-                        changeRoom(2, 7, 2);
-                    }
-                    updateDialog();
-                    return;
-                } else if (currentRoom == 3 && direction.equals("nord")) {
-                    if (monsters[2][bossX][bossY] == null || monsters[2][bossX][bossY].isDead()) {
-                        engine.addMessage("🚪 La via verso le Caverne Umide (Livello 2) è aperta!");
-                        changeRoom(4, 7, 12);
-                    } else {
-                        engine.addMessage("🔒 Un'aura oscura blocca l'USCITA. Sconfiggi il Guardiano prima.");
-                    }
-                    updateDialog();
-                    return;
-                } else if (currentRoom == 6 && direction.equals("sud")) {
-                    int bossX2 = 7;
-                    int bossY2 = 4;
+                switch (result) {
+                    case ROOM_CHANGE:
+                        engine.addMessage(navigationManager.getMessage());
+                        changeRoom(navigationManager.getTargetRoom(),
+                                navigationManager.getTargetX(),
+                                navigationManager.getTargetY());
+                        return;
 
-                    if (monsters[5][bossX2][bossY2] != null && !monsters[5][bossX2][bossY2].isDead()) {
-                        engine.addMessage("🔒 Il Golem di Pietra blocca l'uscita! Sconfiggilo prima!");
-                    } else {
-                        engine.addMessage("🚪 Il Golem è stato sconfitto! La via verso le Caverne è aperta.");
-                        changeRoom(5, 7, 2);
-                    }
-                    updateDialog();
-                    return;
-                } else if (currentRoom == 6 && direction.equals("nord")) {
-                    int bossX2 = 7;
-                    int bossY2 = 4;
+                    case BLOCKED_EXIT:
+                        engine.addMessage(navigationManager.getMessage());
+                        updateDialog();
+                        return;
 
-                    if (monsters[5][bossX2][bossY2] != null && !monsters[5][bossX2][bossY2].isDead()) {
-                        engine.addMessage("🔒 Il Golem di Pietra blocca l'uscita verso la Palude! Sconfiggilo prima!");
-                    } else {
-                        engine.addMessage(
-                                "🚪 Il Golem è stato sconfitto! La via verso la Palude Maleodorante è aperta.");
-                        changeRoom(7, 7, 12);
-                    }
-                    updateDialog();
-                    return;
+                    case NORMAL_MOVE:
+                    case BOSS_CONFIRMATION:
+                    case HIDDEN_DOOR:
+                    case BLOCKED:
+                        // Non dovrebbero succedere per TILE_HIDDEN_DOOR
+                        break;
                 }
             }
 
@@ -2146,11 +2095,8 @@ public class MainFX extends Application {
                 playerX = newX;
                 playerY = newY;
                 drawGrid();
-
-                // ✅ Gestione oggetti/mostri
                 checkTileEvent(newX, newY);
             } else {
-                // Messaggio di ostacolo dinamico
                 if (targetTile == TileConstants.TILE_TREE) {
                     String theme = themeManager.getThemeForRoom(currentRoom);
                     switch (theme) {
