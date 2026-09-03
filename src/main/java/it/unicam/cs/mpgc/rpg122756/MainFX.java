@@ -6,6 +6,7 @@ import it.unicam.cs.mpgc.rpg122756.game.world.DungeonBuilder;
 import it.unicam.cs.mpgc.rpg122756.game.world.MapLayoutBuilder;
 import it.unicam.cs.mpgc.rpg122756.model.crafting.AlchemyBook;
 import it.unicam.cs.mpgc.rpg122756.model.crafting.Recipe;
+import it.unicam.cs.mpgc.rpg122756.model.crafting.RecipeDatabase;
 import it.unicam.cs.mpgc.rpg122756.model.entities.Alchemist;
 import it.unicam.cs.mpgc.rpg122756.model.entities.Monster;
 import it.unicam.cs.mpgc.rpg122756.model.items.Ingredient;
@@ -95,10 +96,10 @@ public class MainFX extends Application {
     private ScrollPane currentInventoryScroll;
     private static final long BOSS_RESPAWN_MINUTES = 30;
     private int maxShenSlots = 4;
-    private Map<Integer, Recipe> possibleRecipes = new HashMap<>();
     private java.util.Map<Integer, Long> bossDefeatedTimes = new java.util.HashMap<>();
     private ThemeManager themeManager = new ThemeManager();
     private MapLayoutBuilder mapLayoutBuilder;
+    private RecipeDatabase recipeDatabase;
 
     @Override
     public void start(Stage primaryStage) {
@@ -111,7 +112,7 @@ public class MainFX extends Application {
         engine = new GameEngine(alchemist, dungeon, alchemyBook, combatSystem, saveManager);
         dungeon.start();
 
-        initializePossibleRecipes();
+        recipeDatabase = new RecipeDatabase();
         updateMaxShenSlots();
 
         initializeAllRooms();
@@ -538,145 +539,6 @@ public class MainFX extends Application {
 
         Stage stage = (Stage) gameArea.getScene().getWindow();
         stage.setTitle("L'Alchimista del Dungeon - Stanza " + newRoom);
-    }
-
-    // --- SISTEMA SHEN ---
-    private void initializePossibleRecipes() {
-        // ==========================================
-        // LIVELLO 1: FORESTA
-        // ==========================================
-
-        // 1. Pozione di Cura Minore (Target: 22) -> 2x Erba Lunare (11+11)
-        Potion curaMinore = new Potion("Pozione di Cura Minore", "Cura moderata.", 20, 5,
-                new PotionEffect(PotionEffect.EffectType.HEAL, 50, 0, "Neutro"));
-        possibleRecipes.put(22, new Recipe("Pozione di Cura Minore", 22, curaMinore, Arrays.asList(
-                new Ingredient("Erba Lunare", "", 11, 1),
-                new Ingredient("Erba Lunare", "", 11, 1))));
-
-        // 2. Tonico del Bosco (Target: 24) -> Erba Lunare (11) + Polvere di Folletto
-        // (13)
-        Potion tonicoBosco = new Potion("Tonico del Bosco", "Recupera energia.", 30, 0,
-                new PotionEffect(PotionEffect.EffectType.AP_RECOVER, 30, 0, "Neutro"));
-        possibleRecipes.put(24, new Recipe("Tonico del Bosco", 24, tonicoBosco, Arrays.asList(
-                new Ingredient("Erba Lunare", "", 11, 1),
-                new Ingredient("Polvere di Folletto", "", 13, 1))));
-
-        // 3. Tisana di Radici (Target: 32) -> 3x Radice Secca (7x3) + 1x Erba Lunare
-        // (11)
-        Potion tisana = new Potion("Tisana di Radici", "Cura leggera.", 15, 3,
-                new PotionEffect(PotionEffect.EffectType.HEAL, 25, 0, "Neutro"));
-        possibleRecipes.put(32, new Recipe("Tisana di Radici", 32, tisana, Arrays.asList(
-                new Ingredient("Radice Secca", "", 7, 1),
-                new Ingredient("Radice Secca", "", 7, 1),
-                new Ingredient("Radice Secca", "", 7, 1),
-                new Ingredient("Erba Lunare", "", 11, 1))));
-
-        // 4. Estratto di Luce (Target: 34) -> 2x Lucciola Argentea (17+17)
-        Potion estrattoLuce = new Potion("Estratto di Luce", "Danno luminoso.", 25, 8,
-                new PotionEffect(PotionEffect.EffectType.DAMAGE, 60, 0, "Luce"));
-        possibleRecipes.put(34, new Recipe("Estratto di Luce", 34, estrattoLuce, Arrays.asList(
-                new Ingredient("Lucciola Argentea", "", 17, 1),
-                new Ingredient("Lucciola Argentea", "", 17, 1))));
-
-        // 5. Occulus Veritatis (Target: 40) -> Zanna di Lupo (23) + Lucciola Argentea
-        // (17)
-        Potion analisi = new Potion("Occulus Veritatis", "Rivela debolezze.", 40, 5,
-                new PotionEffect(PotionEffect.EffectType.ANALYZE, 0, 0, "Luce"));
-        possibleRecipes.put(40, new Recipe("Occulus Veritatis", 40, analisi, Arrays.asList(
-                new Ingredient("Zanna di Lupo", "", 23, 1),
-                new Ingredient("Lucciola Argentea", "", 17, 1))));
-
-        // 6. Siero del Ragno (Target: 42) -> Tela di Ragno (19) + Zanna di Lupo (23)
-        Potion sieroRagno = new Potion("Siero del Ragno", "Danno tossico nel tempo.", 30, 10,
-                new PotionEffect(PotionEffect.EffectType.POISON, 20, 3, "Veleno"));
-        possibleRecipes.put(42, new Recipe("Siero del Ragno", 42, sieroRagno, Arrays.asList(
-                new Ingredient("Tela di Ragno", "", 19, 1),
-                new Ingredient("Zanna di Lupo", "", 23, 1))));
-
-        // 7. Artiglio del Lupo (Target: 46) -> 2x Zanna di Lupo (23+23)
-        Potion artiglioLupo = new Potion("Artiglio del Lupo", "Aumenta Attacco.", 40, 10,
-                new PotionEffect(PotionEffect.EffectType.BUFF_ATTACK, 5, 3, "Neutro"));
-        possibleRecipes.put(46, new Recipe("Artiglio del Lupo", 46, artiglioLupo, Arrays.asList(
-                new Ingredient("Zanna di Lupo", "", 23, 1),
-                new Ingredient("Zanna di Lupo", "", 23, 1))));
-
-        // 8. Veleno Base (Target: 50) -> Tela (19) + Polvere (13) + Erba (11) + Radice
-        // (7)
-        Potion velenoBase = new Potion("Veleno Base", "Danno tossico.", 30, 8,
-                new PotionEffect(PotionEffect.EffectType.POISON, 40, 0, "Veleno"));
-        possibleRecipes.put(50, new Recipe("Veleno Base", 50, velenoBase, Arrays.asList(
-                new Ingredient("Tela di Ragno", "", 19, 1),
-                new Ingredient("Polvere di Folletto", "", 13, 1),
-                new Ingredient("Erba Lunare", "", 11, 1),
-                new Ingredient("Radice Secca", "", 7, 1))));
-
-        // 9. Elisir del Guardiano (Target: 60) -> Cuore della Foresta (53) + Radice
-        // Secca (7)
-        Potion elisirGuardiano = new Potion("Elisir del Guardiano", "Cura massiccia.", 80, 15,
-                new PotionEffect(PotionEffect.EffectType.HEAL, 150, 0, "Neutro"));
-        possibleRecipes.put(60, new Recipe("Elisir del Guardiano", 60, elisirGuardiano, Arrays.asList(
-                new Ingredient("Cuore della Foresta", "", 53, 1),
-                new Ingredient("Radice Secca", "", 7, 1))));
-
-        // 10. Scintilla Esplosiva (Target: 68) -> 4x Lucciola Argentea (17x4)
-        Potion scintilla = new Potion("Scintilla Esplosiva", "Danno da fuoco.", 50, 12,
-                new PotionEffect(PotionEffect.EffectType.DAMAGE, 80, 0, "Fuoco"));
-        possibleRecipes.put(68, new Recipe("Scintilla Esplosiva", 68, scintilla, Arrays.asList(
-                new Ingredient("Lucciola Argentea", "", 17, 1),
-                new Ingredient("Lucciola Argentea", "", 17, 1),
-                new Ingredient("Lucciola Argentea", "", 17, 1),
-                new Ingredient("Lucciola Argentea", "", 17, 1))));
-
-        // ==========================================
-        // LIVELLO 2: CAVERNE
-        // ==========================================
-
-        // 11. Tossina della Caverna (Target: 78) -> Fungo Velenoso (37) + Guano (41)
-        Potion tossina = new Potion("Tossina della Caverna", "Danno tossico forte.", 60, 15,
-                new PotionEffect(PotionEffect.EffectType.POISON, 80, 0, "Veleno"));
-        possibleRecipes.put(78, new Recipe("Tossina della Caverna", 78, tossina, Arrays.asList(
-                new Ingredient("Fungo Velenoso", "", 37, 1),
-                new Ingredient("Guano di Pipistrello", "", 41, 1))));
-
-        // 12. Corazza di Muschio (Target: 80) -> Fungo Velenoso (37) + Dente di Ratto
-        // (43)
-        Potion corazza = new Potion("Corazza di Muschio", "Aumenta Difesa.", 50, 10,
-                new PotionEffect(PotionEffect.EffectType.BUFF_DEFENSE, 5, 3, "Terra"));
-        possibleRecipes.put(80, new Recipe("Corazza di Muschio", 80, corazza, Arrays.asList(
-                new Ingredient("Fungo Velenoso", "", 37, 1),
-                new Ingredient("Dente di Ratto", "", 43, 1))));
-
-        // 13. Forza del Ratto (Target: 90) -> Dente di Ratto (43) + Scheggia di Pietra
-        // (47)
-        Potion forzaRatto = new Potion("Forza del Ratto", "Aumenta Attacco.", 60, 12,
-                new PotionEffect(PotionEffect.EffectType.BUFF_ATTACK, 8, 3, "Neutro"));
-        possibleRecipes.put(90, new Recipe("Forza del Ratto", 90, forzaRatto, Arrays.asList(
-                new Ingredient("Dente di Ratto", "", 43, 1),
-                new Ingredient("Scheggia di Pietra", "", 47, 1))));
-
-        // 14. Pelle di Pietra (Target: 100) -> Nucleo di Pietra (71) + Muschio
-        // Luminescente (29)
-        Potion pellePietra = new Potion("Pelle di Pietra", "Aumenta Difesa.", 80, 15,
-                new PotionEffect(PotionEffect.EffectType.BUFF_DEFENSE, 10, 4, "Terra"));
-        possibleRecipes.put(100, new Recipe("Pelle di Pietra", 100, pellePietra, Arrays.asList(
-                new Ingredient("Nucleo di Pietra", "", 71, 1),
-                new Ingredient("Muschio Luminescente", "", 29, 1))));
-
-        // 15. Furia del Golem (Target: 118) -> Nucleo di Pietra (71) + Scheggia di
-        // Pietra (47)
-        Potion furiaGolem = new Potion("Furia del Golem", "Danno devastante.", 100, 20,
-                new PotionEffect(PotionEffect.EffectType.DAMAGE, 120, 0, "Terra"));
-        possibleRecipes.put(118, new Recipe("Furia del Golem", 118, furiaGolem, Arrays.asList(
-                new Ingredient("Nucleo di Pietra", "", 71, 1),
-                new Ingredient("Scheggia di Pietra", "", 47, 1))));
-
-        // 16. Cuore della Terra (Target: 124) -> Cuore della Foresta (53) + Nucleo di
-        // Pietra (71)
-        Potion cuoreTerra = new Potion("Cuore della Terra", "Cura Totale.", 200, 25,
-                new PotionEffect(PotionEffect.EffectType.HEAL, 9999, 0, "Neutro"));
-        possibleRecipes.put(124, new Recipe("Cuore della Terra", 124, cuoreTerra, Arrays.asList(
-                new Ingredient("Cuore della Foresta", "", 53, 1),
-                new Ingredient("Nucleo di Pietra", "", 71, 1))));
     }
 
     private void updateMaxShenSlots() {
@@ -1762,7 +1624,7 @@ public class MainFX extends Application {
         }
 
         if (!success) {
-            Recipe found = possibleRecipes.get(totalValue);
+            Recipe found = recipeDatabase.getRecipeByValue(totalValue);
             if (found != null) {
                 for (Ingredient ing : shenSelectedIngredients) {
                     engine.getAlchemist().getInventory().removeItem(ing);
