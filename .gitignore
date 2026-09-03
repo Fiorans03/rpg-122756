@@ -1,0 +1,21 @@
+# Gradle
+.gradle/
+build/
+bin/
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Output di compilazione
+*.class
+*.jar
+
+# Savegame personali
+savegame.json
+saves/
+
+# File di sistema
+.DS_Store
+Thumbs.db
