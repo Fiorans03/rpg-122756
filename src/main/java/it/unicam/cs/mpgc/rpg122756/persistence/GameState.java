@@ -5,17 +5,21 @@ import it.unicam.cs.mpgc.rpg122756.model.entities.Alchemist;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * Contiene tutti i dati necessari per salvare e caricare una partita.
- * È una classe pura, pensata per essere serializzata facilmente.
- */
 public class GameState {
+
+    // ==========================================
+    // SEZIONE: VARIABILI DI ISTANZA
+    // ==========================================
 
     private Alchemist alchemist;
     private Set<String> discoveredIngredients;
     private Set<String> discoveredWeaknesses;
     private int currentLevelIndex;
     private String currentRoomId;
+
+    // ==========================================
+    // SEZIONE: COSTRUTTORI
+    // ==========================================
 
     public GameState() {
         this.discoveredWeaknesses = new HashSet<>();
@@ -29,13 +33,12 @@ public class GameState {
         this.currentRoomId = currentRoomId;
     }
 
-    // Getters e Setters (necessari per Gson)
+    // ==========================================
+    // SEZIONE: METODI GETTER
+    // ==========================================
+
     public Alchemist getAlchemist() {
         return alchemist;
-    }
-
-    public void setAlchemist(Alchemist alchemist) {
-        this.alchemist = alchemist;
     }
 
     public Set<String> getDiscoveredIngredients() {
@@ -46,6 +49,22 @@ public class GameState {
         return discoveredWeaknesses;
     }
 
+    public int getCurrentLevelIndex() {
+        return currentLevelIndex;
+    }
+
+    public String getCurrentRoomId() {
+        return currentRoomId;
+    }
+
+    // ==========================================
+    // SEZIONE: METODI SETTER
+    // ==========================================
+
+    public void setAlchemist(Alchemist alchemist) {
+        this.alchemist = alchemist;
+    }
+
     public void setDiscoveredIngredients(Set<String> discoveredIngredients) {
         this.discoveredIngredients = discoveredIngredients;
     }
@@ -54,16 +73,8 @@ public class GameState {
         this.discoveredWeaknesses = discoveredWeaknesses;
     }
 
-    public int getCurrentLevelIndex() {
-        return currentLevelIndex;
-    }
-
     public void setCurrentLevelIndex(int currentLevelIndex) {
         this.currentLevelIndex = currentLevelIndex;
-    }
-
-    public String getCurrentRoomId() {
-        return currentRoomId;
     }
 
     public void setCurrentRoomId(String currentRoomId) {
