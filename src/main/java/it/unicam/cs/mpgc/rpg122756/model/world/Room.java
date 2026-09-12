@@ -7,27 +7,34 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Rappresenta una singola stanza del dungeon.
- */
 public class Room {
-    
+
+    // ==========================================
+    // SEZIONE: VARIABILI DI ISTANZA
+    // ==========================================
+
     private final String id;
-    private String description; 
+    private String description;
     private final List<Item> itemsOnFloor;
     private Monster monster;
     private final Map<Direction, Room> exits;
-    private boolean isCleared; 
+    private boolean isCleared;
+
+    // ==========================================
+    // SEZIONE: COSTRUTTORE
+    // ==========================================
 
     public Room(String id, String description) {
         this.id = id;
         this.description = description;
         this.itemsOnFloor = new ArrayList<>();
         this.exits = new HashMap<>();
-        this.isCleared = true; 
+        this.isCleared = true;
     }
 
-    // --- Gestione Uscite ---
+    // ==========================================
+    // SEZIONE: GESTIONE USCITE
+    // ==========================================
 
     public void setExit(Direction direction, Room room) {
         exits.put(direction, room);
@@ -41,7 +48,9 @@ public class Room {
         return new HashMap<>(exits);
     }
 
-    // --- Gestione Oggetti ---
+    // ==========================================
+    // SEZIONE: GESTIONE OGGETTI
+    // ==========================================
 
     public void addItem(Item item) {
         itemsOnFloor.add(item);
@@ -55,7 +64,9 @@ public class Room {
         itemsOnFloor.clear();
     }
 
-    // --- Gestione Mostri ---
+    // ==========================================
+    // SEZIONE: GESTIONE MOSTRI
+    // ==========================================
 
     public void setMonster(Monster monster) {
         this.monster = monster;
@@ -79,15 +90,25 @@ public class Room {
         return isCleared;
     }
 
-    // --- Info e Setters ---
+    // ==========================================
+    // SEZIONE: INFO E SETTERS
+    // ==========================================
 
-    public String getId() { return id; }
-    
-    public String getDescription() { return description; }
+    public String getId() {
+        return id;
+    }
+
+    public String getDescription() {
+        return description;
+    }
 
     public void setDescription(String description) {
         this.description = description;
     }
+
+    // ==========================================
+    // SEZIONE: METODI DI UTILITÀ
+    // ==========================================
 
     @Override
     public String toString() {
