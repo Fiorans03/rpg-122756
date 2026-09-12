@@ -7,12 +7,16 @@ import it.unicam.cs.mpgc.rpg122756.model.items.Ingredient;
 import it.unicam.cs.mpgc.rpg122756.model.items.Item;
 
 import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
-import java.util.Queue;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import java.util.Random;
 
 public class MapLayoutBuilder {
+
+    // ==========================================
+    // SEZIONE: VARIABILI DI ISTANZA
+    // ==========================================
 
     private final int[][][] currentMap;
     private final Monster[][][] monsters;
@@ -23,6 +27,10 @@ public class MapLayoutBuilder {
     private final Random random;
     private final GameEngine engine;
     private final java.util.Map<Integer, Long> bossDefeatedTimes;
+
+    // ==========================================
+    // SEZIONE: COSTRUTTORE
+    // ==========================================
 
     public MapLayoutBuilder(int[][][] currentMap, Monster[][][] monsters,
             String[][][] monsterNames, Item[][][] itemsOnMap,
@@ -39,6 +47,10 @@ public class MapLayoutBuilder {
         this.bossDefeatedTimes = bossDefeatedTimes;
     }
 
+    // ==========================================
+    // SEZIONE: INIZIALIZZAZIONE STANZE (LIVELLO 1: FORESTA)
+    // ==========================================
+
     public void initializeRoom1() {
         int room = 0;
 
@@ -47,12 +59,6 @@ public class MapLayoutBuilder {
             currentMap[room][GRID_SIZE - 1][i] = TileConstants.TILE_WALL;
             currentMap[room][i][0] = TileConstants.TILE_WALL;
             currentMap[room][i][GRID_SIZE - 1] = TileConstants.TILE_WALL;
-        }
-
-        for (int x = 1; x < GRID_SIZE - 1; x++) {
-            for (int y = 1; y < GRID_SIZE - 1; y++) {
-                currentMap[room][x][y] = TileConstants.TILE_GRASS;
-            }
         }
 
         boolean validMap = false;
@@ -79,21 +85,14 @@ public class MapLayoutBuilder {
 
         currentMap[room][7][2] = TileConstants.TILE_GRASS;
         currentMap[room][7][3] = TileConstants.TILE_GRASS;
-
         currentMap[room][7][1] = TileConstants.TILE_DOOR;
         currentMap[room][6][1] = TileConstants.TILE_TREE;
         currentMap[room][8][1] = TileConstants.TILE_TREE;
 
         List<Monster> monsterPool = Arrays.asList(
-                new Monster("Folletto Dispettoso", 30, 6, 2, 20,
-                        Arrays.asList(new Ingredient("Polvere di Folletto", "Scintillante", 13, 1)),
-                        "Luce", false),
-                new Monster("Lupo Mannaro", 60, 12, 5, 35,
-                        Arrays.asList(new Ingredient("Zanna di Lupo", "Affilata", 23, 1)),
-                        "Luce", false),
-                new Monster("Ragno Velenoso", 40, 8, 3, 25,
-                        Arrays.asList(new Ingredient("Tela di Ragno", "Appiccicosa", 19, 1)),
-                        "Fuoco", false));
+                new Monster("Folletto Dispettoso", 30, 6, 2, 20, Arrays.asList(new Ingredient("Polvere di Folletto", "Scintillante", 13, 1)), "Luce", false),
+                new Monster("Lupo Mannaro", 60, 12, 5, 35, Arrays.asList(new Ingredient("Zanna di Lupo", "Affilata", 23, 1)), "Luce", false),
+                new Monster("Ragno Velenoso", 40, 8, 3, 25, Arrays.asList(new Ingredient("Tela di Ragno", "Appiccicosa", 19, 1)), "Fuoco", false));
 
         int numMonstersRoom1 = 1 + random.nextInt(2);
         for (int i = 0; i < numMonstersRoom1; i++) {
@@ -105,10 +104,7 @@ public class MapLayoutBuilder {
 
             currentMap[room][x][y] = TileConstants.TILE_MONSTER;
             Monster baseMonster = monsterPool.get(random.nextInt(monsterPool.size()));
-            monsters[room][x][y] = new Monster(baseMonster.getName(), baseMonster.getMaxHp(),
-                    baseMonster.getAttack(), baseMonster.getDefense(),
-                    baseMonster.getXpReward(), baseMonster.getPossibleDrops(),
-                    baseMonster.getWeakness(), false);
+            monsters[room][x][y] = new Monster(baseMonster.getName(), baseMonster.getMaxHp(), baseMonster.getAttack(), baseMonster.getDefense(), baseMonster.getXpReward(), baseMonster.getPossibleDrops(), baseMonster.getWeakness(), false);
             monsterNames[room][x][y] = baseMonster.getName();
         }
 
@@ -130,8 +126,7 @@ public class MapLayoutBuilder {
             itemsOnMap[room][x][y] = new Ingredient(itemData[0], itemData[1], Integer.parseInt(itemData[2]), 1);
         }
 
-        engine.addMessage(
-                "Benvenuto/a nel dungeon giovane coraggioso/a. Ti invito a scoprire ogni segreto di questo posto....");
+        engine.addMessage("Benvenuto/a nel dungeon giovane coraggioso/a. Ti invito a scoprire ogni segreto di questo posto....");
     }
 
     public void initializeRoom2() {
@@ -142,12 +137,6 @@ public class MapLayoutBuilder {
             currentMap[room][GRID_SIZE - 1][i] = TileConstants.TILE_WALL;
             currentMap[room][i][0] = TileConstants.TILE_WALL;
             currentMap[room][i][GRID_SIZE - 1] = TileConstants.TILE_WALL;
-        }
-
-        for (int x = 1; x < GRID_SIZE - 1; x++) {
-            for (int y = 1; y < GRID_SIZE - 1; y++) {
-                currentMap[room][x][y] = TileConstants.TILE_GRASS;
-            }
         }
 
         boolean validMap = false;
@@ -186,15 +175,9 @@ public class MapLayoutBuilder {
         currentMap[room][8][1] = TileConstants.TILE_TREE;
 
         List<Monster> monsterPool = Arrays.asList(
-                new Monster("Ragno Velenoso", 40, 8, 3, 25,
-                        Arrays.asList(new Ingredient("Tela di Ragno", "Appiccicosa", 19, 1)),
-                        "Fuoco", false),
-                new Monster("Lupo Mannaro", 60, 12, 5, 35,
-                        Arrays.asList(new Ingredient("Zanna di Lupo", "Affilata", 23, 1)),
-                        "Luce", false),
-                new Monster("Folletto Dispettoso", 30, 6, 2, 20,
-                        Arrays.asList(new Ingredient("Polvere di Folletto", "Scintillante", 13, 1)),
-                        "Luce", false));
+                new Monster("Ragno Velenoso", 40, 8, 3, 25, Arrays.asList(new Ingredient("Tela di Ragno", "Appiccicosa", 19, 1)), "Fuoco", false),
+                new Monster("Lupo Mannaro", 60, 12, 5, 35, Arrays.asList(new Ingredient("Zanna di Lupo", "Affilata", 23, 1)), "Luce", false),
+                new Monster("Folletto Dispettoso", 30, 6, 2, 20, Arrays.asList(new Ingredient("Polvere di Folletto", "Scintillante", 13, 1)), "Luce", false));
 
         int numMonstersRoom2 = 5 + random.nextInt(2);
         for (int i = 0; i < numMonstersRoom2; i++) {
@@ -206,10 +189,7 @@ public class MapLayoutBuilder {
 
             currentMap[room][x][y] = TileConstants.TILE_MONSTER;
             Monster baseMonster = monsterPool.get(random.nextInt(monsterPool.size()));
-            monsters[room][x][y] = new Monster(baseMonster.getName(), baseMonster.getMaxHp(),
-                    baseMonster.getAttack(), baseMonster.getDefense(),
-                    baseMonster.getXpReward(), baseMonster.getPossibleDrops(),
-                    baseMonster.getWeakness(), false);
+            monsters[room][x][y] = new Monster(baseMonster.getName(), baseMonster.getMaxHp(), baseMonster.getAttack(), baseMonster.getDefense(), baseMonster.getXpReward(), baseMonster.getPossibleDrops(), baseMonster.getWeakness(), false);
             monsterNames[room][x][y] = baseMonster.getName();
         }
 
@@ -250,20 +230,16 @@ public class MapLayoutBuilder {
         }
 
         for (int x = 1; x < GRID_SIZE - 1; x++) {
-            if (x != 7)
-                currentMap[room][x][3] = TileConstants.TILE_TREE;
+            if (x != 7) currentMap[room][x][3] = TileConstants.TILE_TREE;
         }
         for (int x = 1; x < GRID_SIZE - 1; x++) {
-            if (x != 5 && x != 9)
-                currentMap[room][x][6] = TileConstants.TILE_TREE;
+            if (x != 5 && x != 9) currentMap[room][x][6] = TileConstants.TILE_TREE;
         }
         for (int x = 1; x < GRID_SIZE - 1; x++) {
-            if (x != 3 && x != 7)
-                currentMap[room][x][9] = TileConstants.TILE_TREE;
+            if (x != 3 && x != 7) currentMap[room][x][9] = TileConstants.TILE_TREE;
         }
         for (int x = 1; x < GRID_SIZE - 1; x++) {
-            if (x != 7)
-                currentMap[room][x][12] = TileConstants.TILE_TREE;
+            if (x != 7) currentMap[room][x][12] = TileConstants.TILE_TREE;
         }
 
         currentMap[room][9][4] = TileConstants.TILE_TREE;
@@ -299,14 +275,16 @@ public class MapLayoutBuilder {
         currentMap[room][7][4] = TileConstants.TILE_BOSS;
         monsterNames[room][7][4] = "Guardiano della Foresta";
         monsters[room][7][4] = new Monster("Guardiano della Foresta", 150, 20, 10, 200,
-                Arrays.asList(new Ingredient("Cuore della Foresta", "Pulsante", 53, 1)),
-                "Fuoco", true);
+                Arrays.asList(new Ingredient("Cuore della Foresta", "Pulsante", 53, 1)), "Fuoco", true);
     }
 
-    public void initializeRoom4() {
-        int room = 3; // Indice 3 = 4a stanza (Livello 2, Stanza 1 - Facile)
+    // ==========================================
+    // SEZIONE: INIZIALIZZAZIONE STANZE (LIVELLO 2: CAVERNE)
+    // ==========================================
 
-        // 1. Bordi
+    public void initializeRoom4() {
+        int room = 3;
+
         for (int i = 0; i < GRID_SIZE; i++) {
             currentMap[room][0][i] = TileConstants.TILE_WALL;
             currentMap[room][GRID_SIZE - 1][i] = TileConstants.TILE_WALL;
@@ -314,14 +292,12 @@ public class MapLayoutBuilder {
             currentMap[room][i][GRID_SIZE - 1] = TileConstants.TILE_WALL;
         }
 
-        // 2. Pavimento base
         for (int x = 1; x < GRID_SIZE - 1; x++) {
             for (int y = 1; y < GRID_SIZE - 1; y++) {
                 currentMap[room][x][y] = TileConstants.TILE_GRASS;
             }
         }
 
-        // 3. Pietre casuali (25, esattamente come Room 1)
         boolean validMap = false;
         while (!validMap) {
             for (int x = 1; x < GRID_SIZE - 1; x++) {
@@ -344,13 +320,11 @@ public class MapLayoutBuilder {
             }
         }
 
-        // 4. Pulizia percorsi porte (esattamente come Room 2)
         currentMap[room][7][2] = TileConstants.TILE_GRASS;
         currentMap[room][7][3] = TileConstants.TILE_GRASS;
         currentMap[room][7][12] = TileConstants.TILE_GRASS;
         currentMap[room][7][11] = TileConstants.TILE_GRASS;
 
-        // 5. Porte e Pietre FISSE ai lati delle porte (come richiesto)
         currentMap[room][7][1] = TileConstants.TILE_DOOR;
         currentMap[room][6][1] = TileConstants.TILE_TREE;
         currentMap[room][8][1] = TileConstants.TILE_TREE;
@@ -359,14 +333,10 @@ public class MapLayoutBuilder {
         currentMap[room][6][13] = TileConstants.TILE_TREE;
         currentMap[room][8][13] = TileConstants.TILE_TREE;
 
-        // 6. Mostri (1 o 2, esattamente come Room 1)
         List<Monster> monsterPool = Arrays.asList(
-                new Monster("Pipistrello delle Caverne", 50, 10, 4, 35,
-                        Arrays.asList(new Ingredient("Guano di Pipistrello", "Appiccicoso", 41, 1)), "Luce", false),
-                new Monster("Ratto Gigante", 45, 9, 3, 30,
-                        Arrays.asList(new Ingredient("Dente di Ratto", "Affilato", 43, 1)), "Veleno", false),
-                new Monster("Golem di Pietra Minore", 80, 12, 8, 45,
-                        Arrays.asList(new Ingredient("Scheggia di Pietra", "Tagliente", 47, 1)), "Fuoco", false));
+                new Monster("Pipistrello delle Caverne", 50, 10, 4, 35, Arrays.asList(new Ingredient("Guano di Pipistrello", "Appiccicoso", 41, 1)), "Luce", false),
+                new Monster("Ratto Gigante", 45, 9, 3, 30, Arrays.asList(new Ingredient("Dente di Ratto", "Affilato", 43, 1)), "Veleno", false),
+                new Monster("Golem di Pietra Minore", 80, 12, 8, 45, Arrays.asList(new Ingredient("Scheggia di Pietra", "Tagliente", 47, 1)), "Fuoco", false));
 
         int numMonsters = 1 + random.nextInt(2);
         for (int i = 0; i < numMonsters; i++) {
@@ -378,14 +348,10 @@ public class MapLayoutBuilder {
 
             currentMap[room][x][y] = TileConstants.TILE_MONSTER;
             Monster baseMonster = monsterPool.get(random.nextInt(monsterPool.size()));
-            monsters[room][x][y] = new Monster(baseMonster.getName(), baseMonster.getMaxHp(),
-                    baseMonster.getAttack(), baseMonster.getDefense(),
-                    baseMonster.getXpReward(), baseMonster.getPossibleDrops(),
-                    baseMonster.getWeakness(), false);
+            monsters[room][x][y] = new Monster(baseMonster.getName(), baseMonster.getMaxHp(), baseMonster.getAttack(), baseMonster.getDefense(), baseMonster.getXpReward(), baseMonster.getPossibleDrops(), baseMonster.getWeakness(), false);
             monsterNames[room][x][y] = baseMonster.getName();
         }
 
-        // 7. Oggetti (1 o 2, esattamente come Room 1)
         List<String[]> availableItems = Arrays.asList(
                 new String[] { "Muschio Luminescente", "Brilla nel buio", "29" },
                 new String[] { "Cristallo Grezzo", "Pietra semipreziosa", "31" },
@@ -407,9 +373,8 @@ public class MapLayoutBuilder {
     }
 
     public void initializeRoom5() {
-        int room = 4; // Indice 4 = 5a stanza (Livello 2, Stanza 2 - Difficile)
+        int room = 4;
 
-        // 1. Bordi
         for (int i = 0; i < GRID_SIZE; i++) {
             currentMap[room][0][i] = TileConstants.TILE_WALL;
             currentMap[room][GRID_SIZE - 1][i] = TileConstants.TILE_WALL;
@@ -417,14 +382,12 @@ public class MapLayoutBuilder {
             currentMap[room][i][GRID_SIZE - 1] = TileConstants.TILE_WALL;
         }
 
-        // 2. Pavimento base
         for (int x = 1; x < GRID_SIZE - 1; x++) {
             for (int y = 1; y < GRID_SIZE - 1; y++) {
                 currentMap[room][x][y] = TileConstants.TILE_GRASS;
             }
         }
 
-        // 3. Pietre casuali (35, esattamente come Room 2)
         boolean validMap = false;
         while (!validMap) {
             for (int x = 1; x < GRID_SIZE - 1; x++) {
@@ -447,13 +410,11 @@ public class MapLayoutBuilder {
             }
         }
 
-        // 4. Pulizia percorsi porte
         currentMap[room][7][2] = TileConstants.TILE_GRASS;
         currentMap[room][7][3] = TileConstants.TILE_GRASS;
         currentMap[room][7][12] = TileConstants.TILE_GRASS;
         currentMap[room][7][11] = TileConstants.TILE_GRASS;
 
-        // 5. Porte e Pietre FISSE ai lati delle porte
         currentMap[room][7][1] = TileConstants.TILE_DOOR;
         currentMap[room][6][1] = TileConstants.TILE_TREE;
         currentMap[room][8][1] = TileConstants.TILE_TREE;
@@ -462,14 +423,10 @@ public class MapLayoutBuilder {
         currentMap[room][6][13] = TileConstants.TILE_TREE;
         currentMap[room][8][13] = TileConstants.TILE_TREE;
 
-        // 6. Mostri (5 o 6, esattamente come Room 2)
         List<Monster> monsterPool = Arrays.asList(
-                new Monster("Pipistrello delle Caverne", 50, 10, 4, 35,
-                        Arrays.asList(new Ingredient("Guano di Pipistrello", "Appiccicoso", 41, 1)), "Luce", false),
-                new Monster("Ratto Gigante", 45, 9, 3, 30,
-                        Arrays.asList(new Ingredient("Dente di Ratto", "Affilato", 43, 1)), "Veleno", false),
-                new Monster("Golem di Pietra Minore", 80, 12, 8, 45,
-                        Arrays.asList(new Ingredient("Scheggia di Pietra", "Tagliente", 47, 1)), "Fuoco", false));
+                new Monster("Pipistrello delle Caverne", 50, 10, 4, 35, Arrays.asList(new Ingredient("Guano di Pipistrello", "Appiccicoso", 41, 1)), "Luce", false),
+                new Monster("Ratto Gigante", 45, 9, 3, 30, Arrays.asList(new Ingredient("Dente di Ratto", "Affilato", 43, 1)), "Veleno", false),
+                new Monster("Golem di Pietra Minore", 80, 12, 8, 45, Arrays.asList(new Ingredient("Scheggia di Pietra", "Tagliente", 47, 1)), "Fuoco", false));
 
         int numMonsters = 5 + random.nextInt(2);
         for (int i = 0; i < numMonsters; i++) {
@@ -481,14 +438,10 @@ public class MapLayoutBuilder {
 
             currentMap[room][x][y] = TileConstants.TILE_MONSTER;
             Monster baseMonster = monsterPool.get(random.nextInt(monsterPool.size()));
-            monsters[room][x][y] = new Monster(baseMonster.getName(), baseMonster.getMaxHp(),
-                    baseMonster.getAttack(), baseMonster.getDefense(),
-                    baseMonster.getXpReward(), baseMonster.getPossibleDrops(),
-                    baseMonster.getWeakness(), false);
+            monsters[room][x][y] = new Monster(baseMonster.getName(), baseMonster.getMaxHp(), baseMonster.getAttack(), baseMonster.getDefense(), baseMonster.getXpReward(), baseMonster.getPossibleDrops(), baseMonster.getWeakness(), false);
             monsterNames[room][x][y] = baseMonster.getName();
         }
 
-        // 7. Oggetti (6 fissi, esattamente come Room 2)
         List<String[]> availableItems = Arrays.asList(
                 new String[] { "Muschio Luminescente", "Brilla nel buio", "29" },
                 new String[] { "Cristallo Grezzo", "Pietra semipreziosa", "31" },
@@ -510,9 +463,8 @@ public class MapLayoutBuilder {
     }
 
     public void initializeRoom6() {
-        int room = 5; // Indice 5 = 6a stanza (Livello 2, Boss)
+        int room = 5;
 
-        // 1. Bordi
         for (int i = 0; i < GRID_SIZE; i++) {
             currentMap[room][0][i] = TileConstants.TILE_WALL;
             currentMap[room][GRID_SIZE - 1][i] = TileConstants.TILE_WALL;
@@ -520,33 +472,26 @@ public class MapLayoutBuilder {
             currentMap[room][i][GRID_SIZE - 1] = TileConstants.TILE_WALL;
         }
 
-        // 2. Pavimento base
         for (int x = 1; x < GRID_SIZE - 1; x++) {
             for (int y = 1; y < GRID_SIZE - 1; y++) {
                 currentMap[room][x][y] = TileConstants.TILE_GRASS;
             }
         }
 
-        // 3. Porte
         currentMap[room][7][13] = TileConstants.TILE_HIDDEN_DOOR;
         currentMap[room][7][1] = TileConstants.TILE_HIDDEN_DOOR;
 
-        // 4. Pietre FISSE (schema identico alla Stanza 3 del Livello 1)
         for (int x = 1; x < GRID_SIZE - 1; x++) {
-            if (x != 7)
-                currentMap[room][x][3] = TileConstants.TILE_TREE;
+            if (x != 7) currentMap[room][x][3] = TileConstants.TILE_TREE;
         }
         for (int x = 1; x < GRID_SIZE - 1; x++) {
-            if (x != 5 && x != 9)
-                currentMap[room][x][6] = TileConstants.TILE_TREE;
+            if (x != 5 && x != 9) currentMap[room][x][6] = TileConstants.TILE_TREE;
         }
         for (int x = 1; x < GRID_SIZE - 1; x++) {
-            if (x != 3 && x != 7)
-                currentMap[room][x][9] = TileConstants.TILE_TREE;
+            if (x != 3 && x != 7) currentMap[room][x][9] = TileConstants.TILE_TREE;
         }
         for (int x = 1; x < GRID_SIZE - 1; x++) {
-            if (x != 7)
-                currentMap[room][x][12] = TileConstants.TILE_TREE;
+            if (x != 7) currentMap[room][x][12] = TileConstants.TILE_TREE;
         }
 
         currentMap[room][9][4] = TileConstants.TILE_TREE;
@@ -571,7 +516,6 @@ public class MapLayoutBuilder {
         currentMap[room][4][5] = TileConstants.TILE_TREE;
         currentMap[room][10][5] = TileConstants.TILE_TREE;
 
-        // 5. BOSS GOLEM DI PIETRA (a 7, 4)
         int bossX = 7;
         int bossY = 4;
         currentMap[room][bossX][bossY] = TileConstants.TILE_BOSS;
@@ -581,13 +525,12 @@ public class MapLayoutBuilder {
     }
 
     // ==========================================
-    // LIVELLO 3: PALUDE (Stanze 7, 8, 9)
+    // SEZIONE: INIZIALIZZAZIONE STANZE (LIVELLO 3: PALUDE)
     // ==========================================
 
     public void initializeRoom7() {
         int room = 6;
 
-        // 1. Bordi e Muri perimetrali
         for (int i = 0; i < GRID_SIZE; i++) {
             currentMap[room][0][i] = TileConstants.TILE_WALL;
             currentMap[room][GRID_SIZE - 1][i] = TileConstants.TILE_WALL;
@@ -597,24 +540,20 @@ public class MapLayoutBuilder {
 
         boolean validMap = false;
         while (!validMap) {
-            // 2. Reset mappa a pavimento base
             for (int x = 1; x < GRID_SIZE - 1; x++) {
                 for (int y = 1; y < GRID_SIZE - 1; y++) {
                     currentMap[room][x][y] = TileConstants.TILE_GRASS;
                 }
             }
 
-            // 3. Piazzamento PORTE (Prima degli alberi!)
             currentMap[room][7][1] = TileConstants.TILE_DOOR;
             currentMap[room][7][GRID_SIZE - 2] = TileConstants.TILE_DOOR;
 
-            // 4. Piazzamento ALBERI FISSI ai 4 punti obbligatori
             currentMap[room][6][1] = TileConstants.TILE_TREE;
             currentMap[room][8][1] = TileConstants.TILE_TREE;
             currentMap[room][6][GRID_SIZE - 2] = TileConstants.TILE_TREE;
             currentMap[room][8][GRID_SIZE - 2] = TileConstants.TILE_TREE;
 
-            // 5. Generazione CASUALE degli altri alberi
             for (int i = 0; i < 35; i++) {
                 int x, y;
                 do {
@@ -625,38 +564,15 @@ public class MapLayoutBuilder {
                 currentMap[room][x][y] = TileConstants.TILE_TREE;
             }
 
-            // 6. Verifica che ci sia un percorso tra le due porte
             if (isReachable(room, 7, 1, 7, GRID_SIZE - 2)) {
                 validMap = true;
             }
         }
 
-        // 7. Pool Mostri (con drop pesati)
         List<Monster> monsterPool = Arrays.asList(
-                new Monster("Rospo Velenoso", 45, 12, 4, 25,
-                        Arrays.asList(
-                                new Ingredient("Occhio di Rospo", "", 35, 1),
-                                new Ingredient("Occhio di Rospo", "", 35, 1),
-                                new Ingredient("Occhio di Rospo", "", 35, 1),
-                                new Ingredient("Fango Tossico", "", 30, 1),
-                                new Ingredient("Fango Tossico", "", 30, 1)),
-                        "Fuoco", "Veleno", false),
-                new Monster("Serpente di Palude", 70, 18, 8, 45,
-                        Arrays.asList(
-                                new Ingredient("Zanna di Serpente", "", 45, 1),
-                                new Ingredient("Zanna di Serpente", "", 45, 1),
-                                new Ingredient("Zanna di Serpente", "", 45, 1),
-                                new Ingredient("Fango Tossico", "", 30, 1),
-                                new Ingredient("Fango Tossico", "", 30, 1)),
-                        "Terra", "Veleno", false),
-                new Monster("Spettro del Loto", 90, 22, 12, 70,
-                        Arrays.asList(
-                                new Ingredient("Loto Marcio", "", 40, 1),
-                                new Ingredient("Loto Marcio", "", 40, 1),
-                                new Ingredient("Loto Marcio", "", 40, 1),
-                                new Ingredient("Occhio di Rospo", "", 35, 1),
-                                new Ingredient("Occhio di Rospo", "", 35, 1)),
-                        "Luce", "Veleno", false));
+                new Monster("Rospo Velenoso", 45, 12, 4, 25, Arrays.asList(new Ingredient("Occhio di Rospo", "", 35, 1), new Ingredient("Occhio di Rospo", "", 35, 1), new Ingredient("Occhio di Rospo", "", 35, 1), new Ingredient("Fango Tossico", "", 30, 1), new Ingredient("Fango Tossico", "", 30, 1)), "Fuoco", "Veleno", false),
+                new Monster("Serpente di Palude", 70, 18, 8, 45, Arrays.asList(new Ingredient("Zanna di Serpente", "", 45, 1), new Ingredient("Zanna di Serpente", "", 45, 1), new Ingredient("Zanna di Serpente", "", 45, 1), new Ingredient("Fango Tossico", "", 30, 1), new Ingredient("Fango Tossico", "", 30, 1)), "Terra", "Veleno", false),
+                new Monster("Spettro del Loto", 90, 22, 12, 70, Arrays.asList(new Ingredient("Loto Marcio", "", 40, 1), new Ingredient("Loto Marcio", "", 40, 1), new Ingredient("Loto Marcio", "", 40, 1), new Ingredient("Occhio di Rospo", "", 35, 1), new Ingredient("Occhio di Rospo", "", 35, 1)), "Luce", "Veleno", false));
 
         int numMonsters = 3 + random.nextInt(2);
         for (int i = 0; i < numMonsters; i++) {
@@ -668,14 +584,10 @@ public class MapLayoutBuilder {
 
             currentMap[room][x][y] = TileConstants.TILE_MONSTER;
             Monster baseMonster = monsterPool.get(random.nextInt(monsterPool.size()));
-            monsters[room][x][y] = new Monster(baseMonster.getName(), baseMonster.getMaxHp(),
-                    baseMonster.getAttack(), baseMonster.getDefense(),
-                    baseMonster.getXpReward(), baseMonster.getPossibleDrops(),
-                    baseMonster.getWeakness(), baseMonster.getResistance(), false);
+            monsters[room][x][y] = new Monster(baseMonster.getName(), baseMonster.getMaxHp(), baseMonster.getAttack(), baseMonster.getDefense(), baseMonster.getXpReward(), baseMonster.getPossibleDrops(), baseMonster.getWeakness(), baseMonster.getResistance(), false);
             monsterNames[room][x][y] = baseMonster.getName();
         }
 
-        // 8. Ingredienti a terra
         List<String[]> availableItems = Arrays.asList(
                 new String[] { "Fango Tossico", "Fango maleodorante.", "30" },
                 new String[] { "Occhio di Rospo", "Occhio viscido.", "35" },
@@ -699,7 +611,6 @@ public class MapLayoutBuilder {
     public void initializeRoom8() {
         int room = 7;
 
-        // 1. Bordi e Muri perimetrali
         for (int i = 0; i < GRID_SIZE; i++) {
             currentMap[room][0][i] = TileConstants.TILE_WALL;
             currentMap[room][GRID_SIZE - 1][i] = TileConstants.TILE_WALL;
@@ -709,24 +620,20 @@ public class MapLayoutBuilder {
 
         boolean validMap = false;
         while (!validMap) {
-            // 2. Reset mappa
             for (int x = 1; x < GRID_SIZE - 1; x++) {
                 for (int y = 1; y < GRID_SIZE - 1; y++) {
                     currentMap[room][x][y] = TileConstants.TILE_GRASS;
                 }
             }
 
-            // 3. Piazzamento PORTE
             currentMap[room][7][1] = TileConstants.TILE_DOOR;
             currentMap[room][7][GRID_SIZE - 2] = TileConstants.TILE_DOOR;
 
-            // 4. Piazzamento ALBERI FISSI
             currentMap[room][6][1] = TileConstants.TILE_TREE;
             currentMap[room][8][1] = TileConstants.TILE_TREE;
             currentMap[room][6][GRID_SIZE - 2] = TileConstants.TILE_TREE;
             currentMap[room][8][GRID_SIZE - 2] = TileConstants.TILE_TREE;
 
-            // 5. Generazione CASUALE (Leggermente più fitta della stanza 7)
             for (int i = 0; i < 40; i++) {
                 int x, y;
                 do {
@@ -737,38 +644,15 @@ public class MapLayoutBuilder {
                 currentMap[room][x][y] = TileConstants.TILE_TREE;
             }
 
-            // 6. Verifica percorso
             if (isReachable(room, 7, 1, 7, GRID_SIZE - 2)) {
                 validMap = true;
             }
         }
 
-        // 7. Pool Mostri (Stesso pool della stanza 7)
         List<Monster> monsterPool = Arrays.asList(
-                new Monster("Rospo Velenoso", 45, 12, 4, 25,
-                        Arrays.asList(
-                                new Ingredient("Occhio di Rospo", "", 35, 1),
-                                new Ingredient("Occhio di Rospo", "", 35, 1),
-                                new Ingredient("Occhio di Rospo", "", 35, 1),
-                                new Ingredient("Fango Tossico", "", 30, 1),
-                                new Ingredient("Fango Tossico", "", 30, 1)),
-                        "Fuoco", "Veleno", false),
-                new Monster("Serpente di Palude", 70, 18, 8, 45,
-                        Arrays.asList(
-                                new Ingredient("Zanna di Serpente", "", 45, 1),
-                                new Ingredient("Zanna di Serpente", "", 45, 1),
-                                new Ingredient("Zanna di Serpente", "", 45, 1),
-                                new Ingredient("Fango Tossico", "", 30, 1),
-                                new Ingredient("Fango Tossico", "", 30, 1)),
-                        "Terra", "Veleno", false),
-                new Monster("Spettro del Loto", 90, 22, 12, 70,
-                        Arrays.asList(
-                                new Ingredient("Loto Marcio", "", 40, 1),
-                                new Ingredient("Loto Marcio", "", 40, 1),
-                                new Ingredient("Loto Marcio", "", 40, 1),
-                                new Ingredient("Occhio di Rospo", "", 35, 1),
-                                new Ingredient("Occhio di Rospo", "", 35, 1)),
-                        "Luce", "Veleno", false));
+                new Monster("Rospo Velenoso", 45, 12, 4, 25, Arrays.asList(new Ingredient("Occhio di Rospo", "", 35, 1), new Ingredient("Occhio di Rospo", "", 35, 1), new Ingredient("Occhio di Rospo", "", 35, 1), new Ingredient("Fango Tossico", "", 30, 1), new Ingredient("Fango Tossico", "", 30, 1)), "Fuoco", "Veleno", false),
+                new Monster("Serpente di Palude", 70, 18, 8, 45, Arrays.asList(new Ingredient("Zanna di Serpente", "", 45, 1), new Ingredient("Zanna di Serpente", "", 45, 1), new Ingredient("Zanna di Serpente", "", 45, 1), new Ingredient("Fango Tossico", "", 30, 1), new Ingredient("Fango Tossico", "", 30, 1)), "Terra", "Veleno", false),
+                new Monster("Spettro del Loto", 90, 22, 12, 70, Arrays.asList(new Ingredient("Loto Marcio", "", 40, 1), new Ingredient("Loto Marcio", "", 40, 1), new Ingredient("Loto Marcio", "", 40, 1), new Ingredient("Occhio di Rospo", "", 35, 1), new Ingredient("Occhio di Rospo", "", 35, 1)), "Luce", "Veleno", false));
 
         int numMonsters = 4 + random.nextInt(2);
         for (int i = 0; i < numMonsters; i++) {
@@ -780,14 +664,10 @@ public class MapLayoutBuilder {
 
             currentMap[room][x][y] = TileConstants.TILE_MONSTER;
             Monster baseMonster = monsterPool.get(random.nextInt(monsterPool.size()));
-            monsters[room][x][y] = new Monster(baseMonster.getName(), baseMonster.getMaxHp(),
-                    baseMonster.getAttack(), baseMonster.getDefense(),
-                    baseMonster.getXpReward(), baseMonster.getPossibleDrops(),
-                    baseMonster.getWeakness(), baseMonster.getResistance(), false);
+            monsters[room][x][y] = new Monster(baseMonster.getName(), baseMonster.getMaxHp(), baseMonster.getAttack(), baseMonster.getDefense(), baseMonster.getXpReward(), baseMonster.getPossibleDrops(), baseMonster.getWeakness(), baseMonster.getResistance(), false);
             monsterNames[room][x][y] = baseMonster.getName();
         }
 
-        // 8. Ingredienti a terra (Aggiungiamo la Zanna di Serpente)
         List<String[]> availableItems = Arrays.asList(
                 new String[] { "Fango Tossico", "Fango maleodorante.", "30" },
                 new String[] { "Occhio di Rospo", "Occhio viscido.", "35" },
@@ -812,7 +692,6 @@ public class MapLayoutBuilder {
     public void initializeRoom9() {
         int room = 8;
 
-        // 1. Bordi e Muri perimetrali
         for (int i = 0; i < GRID_SIZE; i++) {
             currentMap[room][0][i] = TileConstants.TILE_WALL;
             currentMap[room][GRID_SIZE - 1][i] = TileConstants.TILE_WALL;
@@ -822,41 +701,34 @@ public class MapLayoutBuilder {
 
         boolean validMap = false;
         while (!validMap) {
-            // 2. Reset mappa
             for (int x = 1; x < GRID_SIZE - 1; x++) {
                 for (int y = 1; y < GRID_SIZE - 1; y++) {
                     currentMap[room][x][y] = TileConstants.TILE_GRASS;
                 }
             }
 
-            // 3. Porta (Solo a destra/Sud per entrare e uscire)
             currentMap[room][7][GRID_SIZE - 2] = TileConstants.TILE_DOOR;
 
-            // 4. Alberi FISSI ai 4 punti obbligatori (Simmetria)
             currentMap[room][6][1] = TileConstants.TILE_TREE;
             currentMap[room][8][1] = TileConstants.TILE_TREE;
             currentMap[room][6][GRID_SIZE - 2] = TileConstants.TILE_TREE;
             currentMap[room][8][GRID_SIZE - 2] = TileConstants.TILE_TREE;
 
-            // 5. Generazione LABIRINTO (Alta densità: 60 alberi)
             for (int i = 0; i < 60; i++) {
                 int x, y;
                 do {
                     x = 1 + random.nextInt(GRID_SIZE - 2);
                     y = 1 + random.nextInt(GRID_SIZE - 2);
-                } while (currentMap[room][x][y] != TileConstants.TILE_GRASS ||
-                        (x == 7 && y == 4)); // Non piazzare alberi sulla casella del Boss!
+                } while (currentMap[room][x][y] != TileConstants.TILE_GRASS || (x == 7 && y == 4));
 
                 currentMap[room][x][y] = TileConstants.TILE_TREE;
             }
 
-            // 6. Verifica che ci sia un percorso dalla Porta al Boss
             if (isReachable(room, 7, GRID_SIZE - 2, 7, 4)) {
                 validMap = true;
             }
         }
 
-        // 7. Piazzamento BOSS: Basilisco della Palude
         currentMap[room][7][4] = TileConstants.TILE_BOSS;
 
         List<Item> dropsBasilisco = Arrays.asList(
@@ -867,10 +739,13 @@ public class MapLayoutBuilder {
                 new Ingredient("Fango Tossico", "", 30, 1),
                 new Ingredient("Cuore della Palude", "", 80, 1));
 
-        monsters[room][7][4] = new Monster("Basilisco della Palude", 400, 32, 18, 700,
-                dropsBasilisco, "Fuoco", "Veleno", true);
+        monsters[room][7][4] = new Monster("Basilisco della Palude", 400, 32, 18, 700, dropsBasilisco, "Fuoco", "Veleno", true);
         monsterNames[room][7][4] = "Basilisco della Palude";
     }
+
+    // ==========================================
+    // SEZIONE: ALGORITMI DI UTILITÀ
+    // ==========================================
 
     private boolean isReachable(int room, int startX, int startY, int endX, int endY) {
         boolean[][] visited = new boolean[GRID_SIZE][GRID_SIZE];
@@ -883,8 +758,7 @@ public class MapLayoutBuilder {
 
         while (!queue.isEmpty()) {
             int[] current = queue.poll();
-            if (current[0] == endX && current[1] == endY)
-                return true;
+            if (current[0] == endX && current[1] == endY) return true;
 
             for (int i = 0; i < 4; i++) {
                 int nx = current[0] + dx[i];
@@ -903,7 +777,7 @@ public class MapLayoutBuilder {
     }
 
     // ==========================================
-    // RESPAWN MOSTRI E ITEM (Sistema scalabile per tutti i piani)
+    // SEZIONE: SISTEMA DI RESPAWN
     // ==========================================
 
     public void respawnAllRooms() {
@@ -913,13 +787,11 @@ public class MapLayoutBuilder {
     }
 
     private void respawnRoom(int roomIndex) {
-        // Stanze BOSS (indici 2, 5, 8)
         if (roomIndex == 2 || roomIndex == 5 || roomIndex == 8) {
             respawnBoss(roomIndex);
             return;
         }
 
-        // Stanze normali
         List<Monster> monsterPool = getMonsterPoolForRoom(roomIndex);
         List<String[]> availableItems = getItemPoolForRoom(roomIndex);
 
@@ -931,10 +803,8 @@ public class MapLayoutBuilder {
         int existingItems = 0;
         for (int x = 1; x < GRID_SIZE - 1; x++) {
             for (int y = 1; y < GRID_SIZE - 1; y++) {
-                if (currentMap[roomIndex][x][y] == TileConstants.TILE_MONSTER)
-                    existingMonsters++;
-                if (currentMap[roomIndex][x][y] == TileConstants.TILE_ITEM)
-                    existingItems++;
+                if (currentMap[roomIndex][x][y] == TileConstants.TILE_MONSTER) existingMonsters++;
+                if (currentMap[roomIndex][x][y] == TileConstants.TILE_ITEM) existingItems++;
             }
         }
 
@@ -951,10 +821,7 @@ public class MapLayoutBuilder {
 
             currentMap[roomIndex][x][y] = TileConstants.TILE_MONSTER;
             Monster baseMonster = monsterPool.get(random.nextInt(monsterPool.size()));
-            monsters[roomIndex][x][y] = new Monster(baseMonster.getName(), baseMonster.getMaxHp(),
-                    baseMonster.getAttack(), baseMonster.getDefense(),
-                    baseMonster.getXpReward(), baseMonster.getPossibleDrops(),
-                    baseMonster.getWeakness(), false);
+            monsters[roomIndex][x][y] = new Monster(baseMonster.getName(), baseMonster.getMaxHp(), baseMonster.getAttack(), baseMonster.getDefense(), baseMonster.getXpReward(), baseMonster.getPossibleDrops(), baseMonster.getWeakness(), false);
             monsterNames[roomIndex][x][y] = baseMonster.getName();
             existingMonsters++;
         }
@@ -974,9 +841,6 @@ public class MapLayoutBuilder {
         }
     }
 
-    // ==========================================
-    // RESPAWN BOSS (Controlla il timer)
-    // ==========================================
     private void respawnBoss(int bossRoomIndex) {
         int bossRoom = bossRoomIndex + 1;
         int bossX = 7;
@@ -1006,90 +870,54 @@ public class MapLayoutBuilder {
         }
     }
 
-    // ==========================================
-    // CREA IL BOSS PER OGNI STANZA BOSS
-    // ==========================================
     private Monster createBossForRoom(int bossRoomIndex) {
         switch (bossRoomIndex) {
             case 2:
-                return new Monster("Guardiano della Foresta", 150, 20, 10, 200,
-                        Arrays.asList(new Ingredient("Cuore della Foresta", "Pulsante di energia vitale", 53, 1)),
-                        "Fuoco", true);
+                return new Monster("Guardiano della Foresta", 150, 20, 10, 200, Arrays.asList(new Ingredient("Cuore della Foresta", "Pulsante di energia vitale", 53, 1)), "Fuoco", true);
             case 5:
-                return new Monster("Golem di Pietra", 250, 30, 20, 400,
-                        Arrays.asList(new Ingredient("Nucleo di Pietra", "Cuore di roccia", 71, 1)),
-                        "Acqua", true);
+                return new Monster("Golem di Pietra", 250, 30, 20, 400, Arrays.asList(new Ingredient("Nucleo di Pietra", "Cuore di roccia", 71, 1)), "Acqua", true);
             case 8:
-                return new Monster("Basilisco della Palude", 350, 40, 25, 600,
-                        Arrays.asList(new Ingredient("Occhio di Basilisco", "Pietrifica", 89, 1)),
-                        "Luce", true);
+                return new Monster("Basilisco della Palude", 350, 40, 25, 600, Arrays.asList(new Ingredient("Occhio di Basilisco", "Pietrifica", 89, 1)), "Luce", true);
             default:
                 return null;
         }
     }
 
-    // ==========================================
-    // TEMPI DI RESPAWN DEI BOSS (minuti)
-    // ==========================================
     public static int getBossRespawnMinutes(int bossRoom) {
         switch (bossRoom) {
-            case 3:
-                return 30; // Guardiano della Foresta: 30 minuti
-            case 6:
-                return 60; // Golem di Pietra: 1 ora
-            case 9:
-                return 120; // Basilisco della Palude: 2 ore
-            default:
-                return 30;
+            case 3: return 30;
+            case 6: return 60;
+            case 9: return 120;
+            default: return 30;
         }
     }
 
     // ==========================================
-    // POOL DI MOSTRI PER OGNI PIANO
+    // SEZIONE: POOL DI DATI (MOSTRI E ITEM)
     // ==========================================
+
     private List<Monster> getMonsterPoolForRoom(int roomIndex) {
         if (roomIndex == 0 || roomIndex == 1) {
             return Arrays.asList(
-                    new Monster("Ragno Velenoso", 40, 8, 3, 25,
-                            Arrays.asList(new Ingredient("Tela di Ragno", "Appiccicosa", 19, 1)),
-                            "Fuoco", false),
-                    new Monster("Lupo Mannaro", 60, 12, 5, 35,
-                            Arrays.asList(new Ingredient("Zanna di Lupo", "Affilata", 23, 1)),
-                            "Luce", false),
-                    new Monster("Folletto Dispettoso", 30, 6, 2, 20,
-                            Arrays.asList(new Ingredient("Polvere di Folletto", "Scintillante", 13, 1)),
-                            "Luce", false));
+                    new Monster("Ragno Velenoso", 40, 8, 3, 25, Arrays.asList(new Ingredient("Tela di Ragno", "Appiccicosa", 19, 1)), "Fuoco", false),
+                    new Monster("Lupo Mannaro", 60, 12, 5, 35, Arrays.asList(new Ingredient("Zanna di Lupo", "Affilata", 23, 1)), "Luce", false),
+                    new Monster("Folletto Dispettoso", 30, 6, 2, 20, Arrays.asList(new Ingredient("Polvere di Folletto", "Scintillante", 13, 1)), "Luce", false));
         }
         if (roomIndex == 3 || roomIndex == 4) {
             return Arrays.asList(
-                    new Monster("Pipistrello Gigante", 50, 10, 4, 30,
-                            Arrays.asList(new Ingredient("Guano di Pipistrello", "Puzzolente", 41, 1)),
-                            "Luce", false),
-                    new Monster("Ratto delle Fogne", 35, 8, 3, 20,
-                            Arrays.asList(new Ingredient("Dente di Ratto", "Affilato", 43, 1)),
-                            "Fuoco", false),
-                    new Monster("Golem di Pietra Minore", 70, 14, 8, 40,
-                            Arrays.asList(new Ingredient("Scheggia di Pietra", "Dura", 47, 1)),
-                            "Acqua", false));
+                    new Monster("Pipistrello Gigante", 50, 10, 4, 30, Arrays.asList(new Ingredient("Guano di Pipistrello", "Puzzolente", 41, 1)), "Luce", false),
+                    new Monster("Ratto delle Fogne", 35, 8, 3, 20, Arrays.asList(new Ingredient("Dente di Ratto", "Affilato", 43, 1)), "Fuoco", false),
+                    new Monster("Golem di Pietra Minore", 70, 14, 8, 40, Arrays.asList(new Ingredient("Scheggia di Pietra", "Dura", 47, 1)), "Acqua", false));
         }
         if (roomIndex == 6 || roomIndex == 7) {
             return Arrays.asList(
-                    new Monster("Rana Velenosa", 45, 9, 4, 28,
-                            Arrays.asList(new Ingredient("Fungo Velenoso", "Tossico", 37, 1)),
-                            "Terra", false),
-                    new Monster("Serpente Palustre", 55, 11, 5, 32,
-                            Arrays.asList(new Ingredient("Bile di Serpente", "Viscida", 39, 1)),
-                            "Fuoco", false),
-                    new Monster("Non-morto Affogato", 65, 13, 6, 38,
-                            Arrays.asList(new Ingredient("Osso Corrotto", "Infetto", 45, 1)),
-                            "Luce", false));
+                    new Monster("Rana Velenosa", 45, 9, 4, 28, Arrays.asList(new Ingredient("Fungo Velenoso", "Tossico", 37, 1)), "Terra", false),
+                    new Monster("Serpente Palustre", 55, 11, 5, 32, Arrays.asList(new Ingredient("Bile di Serpente", "Viscida", 39, 1)), "Fuoco", false),
+                    new Monster("Non-morto Affogato", 65, 13, 6, 38, Arrays.asList(new Ingredient("Osso Corrotto", "Infetto", 45, 1)), "Luce", false));
         }
         return Arrays.asList();
     }
 
-    // ==========================================
-    // POOL DI ITEM PER OGNI PIANO
-    // ==========================================
     private List<String[]> getItemPoolForRoom(int roomIndex) {
         if (roomIndex == 0 || roomIndex == 1) {
             return Arrays.asList(
