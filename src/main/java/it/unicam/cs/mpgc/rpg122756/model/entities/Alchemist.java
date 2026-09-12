@@ -2,14 +2,18 @@ package it.unicam.cs.mpgc.rpg122756.model.entities;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.Iterator;
 
 import it.unicam.cs.mpgc.rpg122756.model.Inventory;
 import it.unicam.cs.mpgc.rpg122756.model.items.PotionEffect;
 
 public class Alchemist {
+
+    // ==========================================
+    // SEZIONE: VARIABILI DI ISTANZA
+    // ==========================================
 
     private String name;
     private int hp;
@@ -27,11 +31,23 @@ public class Alchemist {
     private Set<String> discoveredWeaknesses = new HashSet<>();
     private List<ActiveEffect> activeEffects = new ArrayList<>();
 
+    // ==========================================
+    // SEZIONE: ENUM
+    // ==========================================
+
+    public enum BonusType {
+        HP, ATTACK, DEFENSE, AP, INVENTORY
+    }
+
+    // ==========================================
+    // SEZIONE: COSTRUTTORE
+    // ==========================================
+
     public Alchemist(String name) {
         this.name = name;
         this.level = 1;
         this.experience = 0;
-        this.maxHp = 9999;
+        this.maxHp = 100;
         this.hp = maxHp;
         this.maxAp = 50;
         this.ap = maxAp;
@@ -42,7 +58,10 @@ public class Alchemist {
         this.hasInfiniteAP = false;
     }
 
-    // --- Getter ---
+    // ==========================================
+    // SEZIONE: METODI GETTER
+    // ==========================================
+
     public String getName() {
         return name;
     }
@@ -66,19 +85,22 @@ public class Alchemist {
     public int getAttack() {
         int base = attack;
         for (ActiveEffect e : activeEffects) {
-            if (e.getType() == PotionEffect.EffectType.BUFF_ATTACK)
+            if (e.getType() == PotionEffect.EffectType.BUFF_ATTACK) {
                 base += e.getMagnitude();
-            if (e.getType() == PotionEffect.EffectType.DEBUFF_ATTACK)
+            }
+            if (e.getType() == PotionEffect.EffectType.DEBUFF_ATTACK) {
                 base -= e.getMagnitude();
+            }
         }
-        return Math.max(1, base); // Minimo 1 di attacco
+        return Math.max(1, base);
     }
 
     public int getDefense() {
         int base = defense;
         for (ActiveEffect e : activeEffects) {
-            if (e.getType() == PotionEffect.EffectType.BUFF_DEFENSE)
+            if (e.getType() == PotionEffect.EffectType.BUFF_DEFENSE) {
                 base += e.getMagnitude();
+            }
         }
         return Math.max(0, base);
     }
@@ -97,12 +119,6 @@ public class Alchemist {
 
     public List<ActiveEffect> getActiveEffects() {
         return activeEffects;
-    }
-
-    public void addEffect(ActiveEffect effect) {
-        // Se l'effetto esiste già, aggiorna la durata (opzionale, qui lo aggiungiamo e
-        // basta)
-        this.activeEffects.add(effect);
     }
 
     public boolean hasInfiniteHP() {
@@ -125,15 +141,10 @@ public class Alchemist {
         return discoveredWeaknesses;
     }
 
-    public void addDiscoveredWeakness(String monsterName) {
-        discoveredWeaknesses.add(monsterName);
-    }
+    // ==========================================
+    // SEZIONE: METODI SETTER
+    // ==========================================
 
-    public boolean hasDiscoveredWeakness(String monsterName) {
-        return discoveredWeaknesses.contains(monsterName);
-    }
-
-    // --- Setter ---
     public void setName(String name) {
         this.name = name;
     }
@@ -170,14 +181,6 @@ public class Alchemist {
         checkLevelUp();
     }
 
-    public void addExperience(int xp) {
-        this.experience += xp;
-        System.out.println("XP guadagnati: " + xp + " | XP totali: " + this.experience + " | XP necessari per livello "
-                + (level + 1) + ": " + getXpForNextLevel());
-
-        checkLevelUp();
-    }
-
     public void setInfiniteHP(boolean infinite) {
         this.hasInfiniteHP = infinite;
     }
@@ -186,10 +189,35 @@ public class Alchemist {
         this.hasInfiniteAP = infinite;
     }
 
-    // --- Sistema di Livellamento ---
+    // ==========================================
+    // SEZIONE: GESTIONE EFFETTI E DEBOLEZZE
+    // ==========================================
+
+    public void addEffect(ActiveEffect effect) {
+        this.activeEffects.add(effect);
+    }
+
+    public void addDiscoveredWeakness(String monsterName) {
+        discoveredWeaknesses.add(monsterName);
+    }
+
+    public boolean hasDiscoveredWeakness(String monsterName) {
+        return discoveredWeaknesses.contains(monsterName);
+    }
+
+    // ==========================================
+    // SEZIONE: SISTEMA DI LIVELLAMENTO
+    // ==========================================
 
     public int getXpForNextLevel() {
         return 50 * level * level;
+    }
+
+    public void addExperience(int xp) {
+        this.experience += xp;
+        System.out.println("XP guadagnati: " + xp + " | XP totali: " + this.experience + " | XP necessari per livello "
+                + (level + 1) + ": " + getXpForNextLevel());
+        checkLevelUp();
     }
 
     private void checkLevelUp() {
@@ -254,7 +282,6 @@ public class Alchemist {
                 break;
         }
 
-        // RESET COMPLETO HP e AP al massimo dopo ogni level up
         hp = maxHp;
         ap = maxAp;
     }
@@ -265,7 +292,9 @@ public class Alchemist {
         }
     }
 
-    // --- Azioni di Gioco ---
+    // ==========================================
+    // SEZIONE: AZIONI DI GIOCO
+    // ==========================================
 
     public void takeDamage(int damage) {
         if (!hasInfiniteHP) {
@@ -290,10 +319,6 @@ public class Alchemist {
         ap = maxAp;
     }
 
-    public enum BonusType {
-        HP, ATTACK, DEFENSE, AP, INVENTORY
-    }
-
     public int tickEffects() {
         int totalDamage = 0;
         Iterator<ActiveEffect> it = activeEffects.iterator();
@@ -301,7 +326,6 @@ public class Alchemist {
         while (it.hasNext()) {
             ActiveEffect e = it.next();
 
-            // Applica danno da veleno
             if (e.getType() == PotionEffect.EffectType.POISON) {
                 totalDamage += e.getMagnitude();
             }
@@ -318,6 +342,10 @@ public class Alchemist {
 
         return totalDamage;
     }
+
+    // ==========================================
+    // SEZIONE: METODI DI UTILITÀ
+    // ==========================================
 
     @Override
     public String toString() {
