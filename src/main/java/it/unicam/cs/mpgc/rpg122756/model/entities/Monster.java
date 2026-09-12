@@ -4,11 +4,15 @@ import it.unicam.cs.mpgc.rpg122756.model.items.Item;
 import it.unicam.cs.mpgc.rpg122756.model.items.PotionEffect;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
-import java.util.Iterator;
 
 public class Monster implements Combatant {
+
+    // ==========================================
+    // SEZIONE: VARIABILI DI ISTANZA
+    // ==========================================
 
     private final String name;
     private int hp;
@@ -20,16 +24,19 @@ public class Monster implements Combatant {
     private final String weakness;
     private final String resistance;
     private final boolean isBoss;
+
     private List<ActiveEffect> activeEffects = new ArrayList<>();
     private final Random random;
 
-    // ✅ COSTRUTTORE 1: Originale (8 parametri) - per retrocompatibilità
+    // ==========================================
+    // SEZIONE: COSTRUTTORI
+    // ==========================================
+
     public Monster(String name, int maxHp, int attack, int defense, int xpReward,
             List<Item> possibleDrops, String weakness, boolean isBoss) {
         this(name, maxHp, attack, defense, xpReward, possibleDrops, weakness, null, isBoss);
     }
 
-    // ✅ COSTRUTTORE 2: Nuovo (9 parametri) - con resistenza
     public Monster(String name, int maxHp, int attack, int defense, int xpReward,
             List<Item> possibleDrops, String weakness, String resistance, boolean isBoss) {
         this.name = name;
@@ -44,6 +51,10 @@ public class Monster implements Combatant {
         this.isBoss = isBoss;
         this.random = new Random();
     }
+
+    // ==========================================
+    // SEZIONE: METODI GETTER E CALCOLO STATISTICHE
+    // ==========================================
 
     @Override
     public String getName() {
@@ -60,12 +71,16 @@ public class Monster implements Combatant {
         return maxHp;
     }
 
-        @Override
+    @Override
     public int getAttack() {
         int base = attack;
         for (ActiveEffect e : activeEffects) {
-            if (e.getType() == PotionEffect.EffectType.BUFF_ATTACK) base += e.getMagnitude();
-            if (e.getType() == PotionEffect.EffectType.DEBUFF_ATTACK) base -= e.getMagnitude();
+            if (e.getType() == PotionEffect.EffectType.BUFF_ATTACK) {
+                base += e.getMagnitude();
+            }
+            if (e.getType() == PotionEffect.EffectType.DEBUFF_ATTACK) {
+                base -= e.getMagnitude();
+            }
         }
         return Math.max(1, base);
     }
@@ -74,34 +89,15 @@ public class Monster implements Combatant {
     public int getDefense() {
         int base = defense;
         for (ActiveEffect e : activeEffects) {
-            if (e.getType() == PotionEffect.EffectType.BUFF_DEFENSE) base += e.getMagnitude();
+            if (e.getType() == PotionEffect.EffectType.BUFF_DEFENSE) {
+                base += e.getMagnitude();
+            }
         }
         return Math.max(0, base);
     }
 
     public int getXpReward() {
         return xpReward;
-    }
-
-        public int tickEffects() {
-        int totalDamage = 0;
-        Iterator<ActiveEffect> it = activeEffects.iterator();
-        
-        while (it.hasNext()) {
-            ActiveEffect e = it.next();
-            if (e.getType() == PotionEffect.EffectType.POISON) {
-                totalDamage += e.getMagnitude();
-            }
-            e.decrementDuration();
-            if (e.isExpired()) {
-                it.remove();
-            }
-        }
-        
-        if (totalDamage > 0) {
-            takeDamage(totalDamage);
-        }
-        return totalDamage;
     }
 
     public List<Item> getPossibleDrops() {
@@ -120,12 +116,16 @@ public class Monster implements Combatant {
         return isBoss;
     }
 
-    public List<ActiveEffect> getActiveEffects() { 
-        return activeEffects; 
+    public List<ActiveEffect> getActiveEffects() {
+        return activeEffects;
     }
 
-    public void addEffect(ActiveEffect effect) { 
-        this.activeEffects.add(effect); 
+    // ==========================================
+    // SEZIONE: GESTIONE EFFETTI E COMBATTIMENTO
+    // ==========================================
+
+    public void addEffect(ActiveEffect effect) {
+        this.activeEffects.add(effect);
     }
 
     @Override
@@ -138,10 +138,32 @@ public class Monster implements Combatant {
         return hp <= 0;
     }
 
+    public int tickEffects() {
+        int totalDamage = 0;
+        Iterator<ActiveEffect> it = activeEffects.iterator();
+
+        while (it.hasNext()) {
+            ActiveEffect e = it.next();
+            if (e.getType() == PotionEffect.EffectType.POISON) {
+                totalDamage += e.getMagnitude();
+            }
+            e.decrementDuration();
+            if (e.isExpired()) {
+                it.remove();
+            }
+        }
+
+        if (totalDamage > 0) {
+            takeDamage(totalDamage);
+        }
+        return totalDamage;
+    }
+
     public List<Item> dropItems() {
         List<Item> drops = new ArrayList<>();
-        if (possibleDrops == null || possibleDrops.isEmpty())
+        if (possibleDrops == null || possibleDrops.isEmpty()) {
             return drops;
+        }
 
         int numDrops = random.nextInt(4);
         for (int i = 0; i < numDrops; i++) {
@@ -149,6 +171,10 @@ public class Monster implements Combatant {
         }
         return drops;
     }
+
+    // ==========================================
+    // SEZIONE: METODI DI UTILITÀ
+    // ==========================================
 
     @Override
     public String toString() {
