@@ -5,10 +5,19 @@ import it.unicam.cs.mpgc.rpg122756.model.items.Potion;
 import java.util.List;
 
 public class Recipe {
+
+    // ==========================================
+    // SEZIONE: VARIABILI DI ISTANZA
+    // ==========================================
+
     private String name;
     private int targetValue;
     private Potion resultPotion;
     private List<Ingredient> suggestedIngredients;
+
+    // ==========================================
+    // SEZIONE: COSTRUTTORE
+    // ==========================================
 
     public Recipe(String name, int targetValue, Potion resultPotion, List<Ingredient> suggestedIngredients) {
         this.name = name;
@@ -16,6 +25,10 @@ public class Recipe {
         this.resultPotion = resultPotion;
         this.suggestedIngredients = suggestedIngredients;
     }
+
+    // ==========================================
+    // SEZIONE: METODI GETTER
+    // ==========================================
 
     public String getName() {
         return name;
@@ -25,7 +38,6 @@ public class Recipe {
         return targetValue;
     }
 
-    // Questo è il metodo chiamato dal MainFX.java
     public Potion getResultPotion() {
         return resultPotion;
     }
