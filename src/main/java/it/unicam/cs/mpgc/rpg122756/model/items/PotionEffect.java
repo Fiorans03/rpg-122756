@@ -1,31 +1,39 @@
 package it.unicam.cs.mpgc.rpg122756.model.items;
 
-/**
- * Rappresenta l'effetto di una pozione.
- * Usa il pattern Strategy per permettere effetti diversi.
- */
 public class PotionEffect {
-    
+
+    // ==========================================
+    // SEZIONE: ENUM
+    // ==========================================
+
+    public enum EffectType {
+        HEAL,
+        DAMAGE,
+        AP_RECOVER,
+        BUFF_ATTACK,
+        BUFF_DEFENSE,
+        DEBUFF_ATTACK,
+        POISON,
+        SLOW,
+        REGEN,
+        SHIELD,
+        ANALYZE,
+        SPECIAL
+    }
+
+    // ==========================================
+    // SEZIONE: VARIABILI DI ISTANZA
+    // ==========================================
+
     private final EffectType type;
     private final int magnitude;
     private final int duration;
     private final String element;
-    
-    public enum EffectType {
-        HEAL,           // Cura HP
-        DAMAGE,         // Danno al nemico
-        AP_RECOVER,     // Recupera Punti Azione
-        BUFF_ATTACK,    // Aumenta ATT
-        BUFF_DEFENSE,   // Aumenta DEF
-        DEBUFF_ATTACK,  // Riduce ATT nemico
-        POISON,         // Danno nel tempo (DoT)
-        SLOW,           // Rallenta nemico
-        REGEN,          // Rigenerazione HP
-        SHIELD,         // Schiva prossimo attacco
-        ANALYZE,        // Rivela debolezze
-        SPECIAL         // Effetti speciali (es. Elisir)
-    }
-    
+
+    // ==========================================
+    // SEZIONE: COSTRUTTORI
+    // ==========================================
+
     public PotionEffect(EffectType type, int magnitude, int duration) {
         this(type, magnitude, duration, "Neutro");
     }
@@ -36,23 +44,31 @@ public class PotionEffect {
         this.duration = duration;
         this.element = element;
     }
-    
+
+    // ==========================================
+    // SEZIONE: METODI GETTER
+    // ==========================================
+
     public EffectType getType() {
         return type;
     }
-    
+
     public int getMagnitude() {
         return magnitude;
     }
-    
+
     public int getDuration() {
         return duration;
     }
 
-    public String getElement() { 
-        return element; 
+    public String getElement() {
+        return element;
     }
-    
+
+    // ==========================================
+    // SEZIONE: METODI DI UTILITÀ
+    // ==========================================
+
     public boolean isInstantaneous() {
         return duration == 0;
     }
