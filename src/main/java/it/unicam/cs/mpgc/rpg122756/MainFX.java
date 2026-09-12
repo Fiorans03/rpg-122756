@@ -8,6 +8,7 @@ import it.unicam.cs.mpgc.rpg122756.game.world.NavigationManager;
 import it.unicam.cs.mpgc.rpg122756.model.crafting.AlchemyBook;
 import it.unicam.cs.mpgc.rpg122756.model.crafting.Recipe;
 import it.unicam.cs.mpgc.rpg122756.model.crafting.RecipeDatabase;
+import it.unicam.cs.mpgc.rpg122756.model.entities.ActiveEffect;
 import it.unicam.cs.mpgc.rpg122756.model.entities.Alchemist;
 import it.unicam.cs.mpgc.rpg122756.model.entities.Monster;
 import it.unicam.cs.mpgc.rpg122756.model.items.Ingredient;
@@ -16,36 +17,55 @@ import it.unicam.cs.mpgc.rpg122756.model.items.Potion;
 import it.unicam.cs.mpgc.rpg122756.model.items.PotionEffect;
 import it.unicam.cs.mpgc.rpg122756.persistence.GameState;
 import it.unicam.cs.mpgc.rpg122756.persistence.impl.JsonSaveManager;
-import it.unicam.cs.mpgc.rpg122756.model.entities.ActiveEffect;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.image.Image;
-import javafx.scene.layout.*;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.image.ImageView;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import javafx.scene.Node;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+
 import java.io.File;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Random;
+import java.util.Set;
 import java.util.stream.Collectors;
-import javafx.scene.control.TextInputDialog;
-import javafx.scene.control.ChoiceDialog;
-import java.util.*;
 
 public class MainFX extends Application {
+
+    // ==========================================
+    // SEZIONE: VARIABILI DI ISTANZA E COSTANTI
+    // ==========================================
 
     private GameEngine engine;
     private CombatSystem combatSystem;
@@ -91,7 +111,6 @@ public class MainFX extends Application {
 
     private StackPane currentOverlay = null;
 
-    // Variabili per il sistema SHEN
     private List<Ingredient> shenSelectedIngredients = new ArrayList<>();
     private double inventoryScrollPos = 0.0;
     private ScrollPane currentInventoryScroll;
@@ -101,6 +120,10 @@ public class MainFX extends Application {
     private MapLayoutBuilder mapLayoutBuilder;
     private RecipeDatabase recipeDatabase;
     private NavigationManager navigationManager = new NavigationManager();
+
+    // ==========================================
+    // SEZIONE: INIZIALIZZAZIONE E AVVIO
+    // ==========================================
 
     @Override
     public void start(Stage primaryStage) {
@@ -125,19 +148,14 @@ public class MainFX extends Application {
         root.setTop(topBar);
 
         gameArea = createGameArea();
-
         gameArea.setMaxHeight(420);
         gameArea.setPrefHeight(420);
-
         gameArea.setPadding(new Insets(0, 0, 15, 0));
-
         root.setCenter(gameArea);
 
         bottomControls = createBottomControls();
-
         bottomControls.setMinHeight(190);
         bottomControls.setPrefHeight(190);
-
         root.setBottom(bottomControls);
 
         Scene scene = new Scene(root, 1200, 800);
@@ -146,9 +164,7 @@ public class MainFX extends Application {
         primaryStage.setFullScreen(true);
         primaryStage.show();
 
-        Platform.runLater(() -> {
-            resizeGrid();
-        });
+        Platform.runLater(() -> resizeGrid());
 
         primaryStage.widthProperty().addListener((obs, oldVal, newVal) -> resizeGrid());
         primaryStage.heightProperty().addListener((obs, oldVal, newVal) -> resizeGrid());
@@ -192,21 +208,20 @@ public class MainFX extends Application {
         drawGrid();
     }
 
+    // ==========================================
+    // SEZIONE: CREAZIONE UI E LAYOUT
+    // ==========================================
+
     private HBox createTopBar() {
         HBox bar = new HBox(20);
         bar.setPadding(new Insets(15));
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.setStyle("-fx-background-color: #34495e;");
 
-        // ==========================================
-        // STATS BOX (Modificata: ATT e DEF sotto la barra principale)
-        // ==========================================
-
-        // Riga superiore: HP, AP, LIV, XP, Stanza
         HBox topStatsRow = new HBox(20);
         topStatsRow.setAlignment(Pos.CENTER_LEFT);
 
-        hpLabel = new Label("HP: 9999/9999"); // ✅ Lasciato a 9999 come richiesto
+        hpLabel = new Label("HP: 9999/9999");
         hpLabel.setFont(Font.font("Courier New", FontWeight.BOLD, 18));
         hpLabel.setTextFill(Color.WHITE);
 
@@ -228,36 +243,29 @@ public class MainFX extends Application {
 
         topStatsRow.getChildren().addAll(hpLabel, apLabel, levelLabel, xpLabel, roomLabel);
 
-        // Riga inferiore: ATT e DEF
         HBox bottomStatsRow = new HBox(20);
         bottomStatsRow.setAlignment(Pos.CENTER_LEFT);
 
         atkLabel = new Label("ATT: 10");
         atkLabel.setFont(Font.font("Courier New", FontWeight.BOLD, 16));
-        atkLabel.setTextFill(Color.rgb(255, 100, 100)); // Rosso chiaro
+        atkLabel.setTextFill(Color.rgb(255, 100, 100));
 
         defLabel = new Label("DEF: 5");
         defLabel.setFont(Font.font("Courier New", FontWeight.BOLD, 16));
-        defLabel.setTextFill(Color.rgb(100, 200, 255)); // Azzurro chiaro
+        defLabel.setTextFill(Color.rgb(100, 200, 255));
 
         bottomStatsRow.getChildren().addAll(atkLabel, defLabel);
 
-        // VBox che contiene le due righe di statistiche (5px di spazio verticale tra di
-        // esse)
         VBox statsBox = new VBox(5);
         statsBox.setAlignment(Pos.CENTER_LEFT);
         statsBox.getChildren().addAll(topStatsRow, bottomStatsRow);
 
-        // ==========================================
-        // SPAZIATORE E PULSANTI DESTRI
-        // ==========================================
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         HBox rightButtons = new HBox(15);
         rightButtons.setAlignment(Pos.CENTER_RIGHT);
 
-        // 1️⃣ PULSANTE SALVA
         Button btnSave = new Button("💾 Salva");
         btnSave.setPrefSize(100, 40);
         btnSave.setStyle(
@@ -305,7 +313,6 @@ public class MainFX extends Application {
             });
         });
 
-        // 2️⃣ PULSANTE CARICA
         Button btnLoad = new Button("📂 Carica");
         btnLoad.setPrefSize(100, 40);
         btnLoad.setStyle(
@@ -322,9 +329,7 @@ public class MainFX extends Application {
                 return;
             }
 
-            List<String> saveNames = Arrays.stream(files)
-                    .map(File::getName)
-                    .collect(Collectors.toList());
+            List<String> saveNames = Arrays.stream(files).map(File::getName).collect(Collectors.toList());
 
             ChoiceDialog<String> loadDialog = new ChoiceDialog<>(saveNames.get(0), saveNames);
             loadDialog.setTitle("Caricamento Partita");
@@ -378,7 +383,6 @@ public class MainFX extends Application {
             });
         });
 
-        // 3️⃣ PULSANTI INVENTARIO E LIBRO ALCHEMICO
         Button btnInventory = new Button("🎒 Inventario");
         btnInventory.setPrefSize(140, 40);
         btnInventory.setStyle(
@@ -388,6 +392,7 @@ public class MainFX extends Application {
                 return;
             showInventoryOverlay();
         });
+
         Button btnBook = new Button("📖 Libro Alchemico");
         btnBook.setPrefSize(160, 40);
         btnBook.setStyle(
@@ -405,7 +410,99 @@ public class MainFX extends Application {
         return bar;
     }
 
-    // --- INIZIALIZZAZIONE DELLE STANZE ---
+    private StackPane createGameArea() {
+        StackPane area = new StackPane();
+        area.setStyle("-fx-background-color: #1a1a1a;");
+        area.setPadding(new Insets(10));
+        gameGrid = new GridPane();
+        gameGrid.setHgap(0);
+        gameGrid.setVgap(0);
+        gameGrid.setStyle("-fx-border-color: #7f8c8d; -fx-border-width: 3;");
+        StackPane.setAlignment(gameGrid, Pos.CENTER);
+        area.getChildren().add(gameGrid);
+        return area;
+    }
+
+    private HBox createBottomControls() {
+        HBox bar = new HBox(15);
+        bar.setPadding(new Insets(10));
+        bar.setAlignment(Pos.CENTER);
+        bar.setStyle("-fx-background-color: #34495e;");
+
+        VBox dpad = createDPad();
+        dpad.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+
+        dialogArea = new TextArea();
+        dialogArea.setPrefRowCount(6);
+        dialogArea.setMaxHeight(140);
+        dialogArea.setEditable(false);
+        dialogArea.setWrapText(true);
+        dialogArea.setStyle(
+                "-fx-background-color: #1a1a1a; -fx-text-fill: #2ecc71; -fx-font-family: 'Courier New'; -fx-font-size: 14; -fx-control-inner-background: #1a1a1a;");
+        HBox.setHgrow(dialogArea, Priority.ALWAYS);
+
+        HBox actionBox = createActionButtons();
+        actionBox.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+
+        bar.getChildren().addAll(dpad, dialogArea, actionBox);
+        bar.setFillHeight(true);
+
+        return bar;
+    }
+
+    private VBox createDPad() {
+        VBox dpad = new VBox(5);
+        dpad.setAlignment(Pos.CENTER);
+        dpad.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+
+        HBox topRow = new HBox();
+        topRow.setAlignment(Pos.CENTER);
+        btnUp = createDirectionButton("▲", 60, 40);
+        btnUp.setOnAction(e -> handleMove("nord"));
+        topRow.getChildren().add(btnUp);
+
+        HBox middleRow = new HBox(5);
+        middleRow.setAlignment(Pos.CENTER);
+        btnLeft = createDirectionButton("◀", 40, 40);
+        btnLeft.setOnAction(e -> handleMove("ovest"));
+        btnRight = createDirectionButton("▶", 40, 40);
+        btnRight.setOnAction(e -> handleMove("est"));
+        middleRow.getChildren().addAll(btnLeft, btnRight);
+
+        HBox bottomRow = new HBox();
+        bottomRow.setAlignment(Pos.CENTER);
+        btnDown = createDirectionButton("▼", 60, 40);
+        btnDown.setOnAction(e -> handleMove("sud"));
+        bottomRow.getChildren().add(btnDown);
+
+        dpad.getChildren().addAll(topRow, middleRow, bottomRow);
+        return dpad;
+    }
+
+    private Button createDirectionButton(String text, int width, int height) {
+        Button btn = new Button(text);
+        btn.setPrefSize(width, height);
+        btn.setStyle(
+                "-fx-background-color: #2c3e50; -fx-text-fill: white; -fx-font-size: 20; -fx-border-color: #7f8c8d; -fx-border-radius: 5;");
+        return btn;
+    }
+
+    private HBox createActionButtons() {
+        HBox box = new HBox(15);
+        box.setAlignment(Pos.CENTER);
+        btnA = new Button("A");
+        btnA.setPrefSize(70, 70);
+        btnA.setStyle(
+                "-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-size: 28; -fx-font-weight: bold; -fx-border-radius: 35; -fx-background-radius: 35;");
+        btnA.setOnAction(e -> handleActionA());
+        box.getChildren().add(btnA);
+        return box;
+    }
+
+    // ==========================================
+    // SEZIONE: INIZIALIZZAZIONE STANZE E RESPAWN
+    // ==========================================
+
     private void initializeAllRooms() {
         mapLayoutBuilder = new MapLayoutBuilder(currentMap, monsters, monsterNames, itemsOnMap, itemNames, GRID_SIZE,
                 random, engine, bossDefeatedTimes);
@@ -445,6 +542,10 @@ public class MainFX extends Application {
             drawGrid();
         }
     }
+
+    // ==========================================
+    // SEZIONE: CAMBIO STANZA E NAVIGAZIONE
+    // ==========================================
 
     private void changeRoom(int newRoom, int newX, int newY) {
         currentRoom = newRoom;
@@ -496,17 +597,18 @@ public class MainFX extends Application {
             maxShenSlots = 12;
     }
 
-    // --- OVERLAY LEVEL UP ---
+    // ==========================================
+    // SEZIONE: OVERLAY LEVEL UP
+    // ==========================================
+
     private void showLevelUpOverlay() {
         isLevelingUp = true;
         disableControls();
 
         StackPane overlay = new StackPane();
         overlay.setStyle("-fx-background-color: rgba(0,0,0,0.9);");
-
         overlay.setMouseTransparent(false);
         overlay.setOnMouseClicked(e -> e.consume());
-
         currentOverlay = overlay;
 
         VBox content = new VBox(20);
@@ -599,9 +701,7 @@ public class MainFX extends Application {
                 }
 
                 engine.getAlchemist().consumeOneLevelUp();
-
                 handleMilestone();
-
                 engine.addMessage("🎉 Bonus scelto: " + bonus[0] + "!");
                 updateDialog();
                 updateStats();
@@ -612,9 +712,7 @@ public class MainFX extends Application {
                 }
 
                 if (engine.getAlchemist().getPendingLevelUpCount() > 0) {
-                    javafx.application.Platform.runLater(() -> {
-                        showLevelUpOverlay();
-                    });
+                    javafx.application.Platform.runLater(() -> showLevelUpOverlay());
                 } else {
                     isLevelingUp = false;
                     enableControls();
@@ -694,7 +792,10 @@ public class MainFX extends Application {
             showLevelUpOverlay();
     }
 
-    // --- OVERLAY INVENTARIO ---
+    // ==========================================
+    // SEZIONE: OVERLAY INVENTARIO
+    // ==========================================
+
     private void showInventoryOverlay() {
         if (inCombat) {
             engine.addMessage("Non puoi aprire l'inventario durante il combattimento!");
@@ -736,14 +837,11 @@ public class MainFX extends Application {
         currentInventoryScroll = scrollPane;
         scrollPane.setVvalue(inventoryScrollPos);
 
-        // FIX: GridPane unico per tutta la lista (tabella invisibile con colonne
-        // allineate)
         GridPane itemsGrid = new GridPane();
         itemsGrid.setHgap(10);
         itemsGrid.setVgap(5);
         itemsGrid.setPadding(new Insets(5));
 
-        // Definiamo le colonne con larghezze fisse
         ColumnConstraints colIcon = new ColumnConstraints(30);
         ColumnConstraints colQty = new ColumnConstraints(40);
         ColumnConstraints colName = new ColumnConstraints();
@@ -771,34 +869,28 @@ public class MainFX extends Application {
                 int quantity = itemList.size();
                 Item firstItem = itemList.get(0);
 
-                // FIX: Aggiungiamo lo sfondo per la riga (occupa tutte le 6 colonne)
                 HBox rowBackground = new HBox();
                 rowBackground.setStyle(
                         "-fx-background-color: #2c3e50; -fx-border-color: #27ae60; -fx-border-width: 1; -fx-border-radius: 5;");
-                rowBackground.setPrefHeight(45); // Altezza della riga
-                itemsGrid.add(rowBackground, 0, rowIndex, 6, 1); // Span di 6 colonne
+                rowBackground.setPrefHeight(45);
+                itemsGrid.add(rowBackground, 0, rowIndex, 6, 1);
 
-                // Colonna 0: Icona
                 Label itemIcon = new Label(firstItem instanceof Potion ? "🧪" : "🌿");
                 itemIcon.setFont(Font.font("Courier New", 22));
 
-                // Colonna 1: Quantità
                 Label quantityLabel = new Label(quantity + "x");
                 quantityLabel.setFont(Font.font("Courier New", FontWeight.BOLD, 16));
                 quantityLabel.setTextFill(Color.WHITE);
 
-                // Colonna 2: Nome
                 Label nameLabel = new Label(itemName);
                 nameLabel.setFont(Font.font("Courier New", FontWeight.BOLD, 16));
                 nameLabel.setTextFill(Color.rgb(46, 204, 113));
 
-                // Colonna 3: Valore (centrato)
                 Label valueLabel = new Label("Val: " + firstItem.getValue());
                 valueLabel.setFont(Font.font("Courier New", FontWeight.BOLD, 14));
                 valueLabel.setTextFill(Color.rgb(241, 196, 15));
                 valueLabel.setAlignment(Pos.CENTER);
 
-                // Colonna 4: Elimina 1 (visibile solo se quantity > 1)
                 HBox del1Box = new HBox();
                 del1Box.setAlignment(Pos.CENTER);
                 if (quantity > 1) {
@@ -813,7 +905,6 @@ public class MainFX extends Application {
                     del1Box.getChildren().add(btnRemoveOne);
                 }
 
-                // Colonna 5: Elimina Tutto
                 HBox delAllBox = new HBox();
                 delAllBox.setAlignment(Pos.CENTER);
                 Button btnRemoveAll = new Button("🗑️ Tutto");
@@ -826,7 +917,6 @@ public class MainFX extends Application {
                 });
                 delAllBox.getChildren().add(btnRemoveAll);
 
-                // Aggiungiamo gli elementi SOPRA lo sfondo
                 itemsGrid.add(itemIcon, 0, rowIndex);
                 itemsGrid.add(quantityLabel, 1, rowIndex);
                 itemsGrid.add(nameLabel, 2, rowIndex);
@@ -852,7 +942,6 @@ public class MainFX extends Application {
     }
 
     private void removeOneItemFromInventory(String itemName) {
-        // FIX 2: Salva la posizione dello scroll prima di modificare la lista
         if (currentInventoryScroll != null) {
             inventoryScrollPos = currentInventoryScroll.getVvalue();
         }
@@ -861,7 +950,7 @@ public class MainFX extends Application {
         for (Item item : items) {
             if (item.getName().equals(itemName)) {
                 engine.getAlchemist().getInventory().removeItem(item);
-                engine.addMessage("️ Hai eliminato 1x " + itemName);
+                engine.addMessage("Hai eliminato 1x " + itemName);
                 updateDialog();
                 updateStats();
                 return;
@@ -885,7 +974,10 @@ public class MainFX extends Application {
         }
     }
 
-    // --- OVERLAY LIBRO ALCHEMICO ---
+    // ==========================================
+    // SEZIONE: OVERLAY LIBRO ALCHEMICO E SHEN
+    // ==========================================
+
     private int currentAlchemyPage = 0;
     private int recipesPerPage = 4;
 
@@ -897,7 +989,6 @@ public class MainFX extends Application {
         }
 
         closeOverlay();
-
         showingBook = true;
         disableControls();
 
@@ -961,7 +1052,6 @@ public class MainFX extends Application {
             leftCount++;
         }
 
-        // Pagina destra (prossime 2 ricette)
         int rightCount = 0;
         for (int i = startIndex + 2; i < endIndex && rightCount < 2; i++) {
             Recipe recipe = recipes.get(i);
@@ -990,7 +1080,6 @@ public class MainFX extends Application {
 
         pagesArea.getChildren().addAll(leftPage, centerLine, rightPage);
 
-        // Navigazione
         HBox navigation = new HBox(30);
         navigation.setAlignment(Pos.CENTER);
 
@@ -1060,12 +1149,11 @@ public class MainFX extends Application {
         gameArea.getChildren().add(overlay);
     }
 
-    // Card compatta: solo nome della ricetta
     private VBox createCompactRecipeCard(Recipe recipe) {
         VBox card = new VBox(5);
         card.setPadding(new Insets(12));
         card.setMaxWidth(Double.MAX_VALUE);
-        card.setMinHeight(70); // Più piccola
+        card.setMinHeight(70);
         card.setStyle(
                 "-fx-background-color: rgba(212,175,55,0.2); -fx-border-color: #d4af37; -fx-border-width: 2; -fx-border-radius: 8;");
         card.setOnMouseClicked(e -> showRecipeDetailOverlay(recipe));
@@ -1087,7 +1175,6 @@ public class MainFX extends Application {
         return card;
     }
 
-    // Nuova overlay per i dettagli della ricetta
     private void showRecipeDetailOverlay(Recipe recipe) {
         if (currentOverlay != null) {
             gameArea.getChildren().remove(currentOverlay);
@@ -1105,14 +1192,12 @@ public class MainFX extends Application {
         content.setStyle(
                 "-fx-background-color: #f4e4c1; -fx-border-color: #d4af37; -fx-border-width: 4; -fx-border-radius: 10;");
 
-        // Titolo
         Label title = new Label("🧪 " + recipe.getName());
         title.setFont(Font.font("Courier New", FontWeight.BOLD, 26));
         title.setTextFill(Color.rgb(62, 39, 35));
         title.setAlignment(Pos.CENTER);
         title.setMaxWidth(Double.MAX_VALUE);
 
-        // Descrizione (cos'è)
         Label descTitle = new Label("📜 Cos'è:");
         descTitle.setFont(Font.font("Courier New", FontWeight.BOLD, 14));
         descTitle.setTextFill(Color.rgb(62, 39, 35));
@@ -1124,7 +1209,6 @@ public class MainFX extends Application {
         descText.setWrapText(true);
         descText.setMaxWidth(Double.MAX_VALUE);
 
-        // Effetto (cosa fa)
         Label effectTitle = new Label("⚡ Effetto:");
         effectTitle.setFont(Font.font("Courier New", FontWeight.BOLD, 14));
         effectTitle.setTextFill(Color.rgb(62, 39, 35));
@@ -1142,20 +1226,17 @@ public class MainFX extends Application {
         effectLabel.setTextFill(Color.rgb(211, 84, 0));
         effectLabel.setMaxWidth(Double.MAX_VALUE);
 
-        // Costo AP
         Label apLabel = new Label("Costo AP: " + recipe.getResultPotion().getApCost());
         apLabel.setFont(Font.font("Courier New", 13));
         apLabel.setTextFill(Color.rgb(62, 39, 35));
         apLabel.setMaxWidth(Double.MAX_VALUE);
 
-        // Separatore
         Label separator = new Label("━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         separator.setFont(Font.font("Courier New", 12));
         separator.setTextFill(Color.rgb(212, 175, 55));
         separator.setAlignment(Pos.CENTER);
         separator.setMaxWidth(Double.MAX_VALUE);
 
-        // Come farla (ingredienti)
         Label craftTitle = new Label("🔬 Come farla:");
         craftTitle.setFont(Font.font("Courier New", FontWeight.BOLD, 14));
         craftTitle.setTextFill(Color.rgb(62, 39, 35));
@@ -1185,16 +1266,15 @@ public class MainFX extends Application {
         hintLabel.setWrapText(true);
         hintLabel.setMaxWidth(Double.MAX_VALUE);
 
-        // Pulsanti
         HBox buttons = new HBox(20);
         buttons.setAlignment(Pos.CENTER);
 
-        Button btnCraft = new Button("️ Vai al Cerchio SHEN");
+        Button btnCraft = new Button("Vai al Cerchio SHEN");
         btnCraft.setPrefSize(200, 40);
         btnCraft.setStyle(
                 "-fx-background-color: #00bcd4; -fx-text-fill: white; -fx-font-size: 14; -fx-font-weight: bold; -fx-border-radius: 5;");
         btnCraft.setOnAction(e -> {
-            closeOverlay(); // Chiude i dettagli
+            closeOverlay();
             showShenCircleOverlay();
         });
 
@@ -1239,7 +1319,6 @@ public class MainFX extends Application {
         mainLayout.setAlignment(Pos.CENTER);
         mainLayout.setPadding(new Insets(20));
 
-        // 1️⃣ COLONNA SINISTRA: Pulsanti
         VBox leftColumn = new VBox(25);
         leftColumn.setAlignment(Pos.CENTER);
 
@@ -1277,7 +1356,6 @@ public class MainFX extends Application {
 
         leftColumn.getChildren().addAll(btnInventory, btnTransmute, btnBack);
 
-        // 2️⃣ COLONNA CENTRALE: Lista ingredienti a scorrimento
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setPrefWidth(420);
         scrollPane.setPrefHeight(500);
@@ -1338,13 +1416,12 @@ public class MainFX extends Application {
         centerColumn.setAlignment(Pos.CENTER);
         centerColumn.getChildren().add(scrollPane);
 
-        // 3️⃣ COLONNA DESTRA: Immagine SHEN
         VBox rightColumn = new VBox(20);
         rightColumn.setAlignment(Pos.CENTER);
 
         Node circleNode;
         try {
-            java.io.InputStream is = getClass().getResourceAsStream("/shen.jpeg");
+            InputStream is = getClass().getResourceAsStream("/shen.jpeg");
             if (is == null) {
                 is = getClass().getResourceAsStream("shen.jpeg");
             }
@@ -1370,10 +1447,8 @@ public class MainFX extends Application {
 
         rightColumn.getChildren().add(circleNode);
 
-        // Assemblaggio colonne
         mainLayout.getChildren().addAll(leftColumn, centerColumn, rightColumn);
 
-        // Contenitore principale fullscreen
         VBox content = new VBox(20);
         content.setPadding(new Insets(20, 30, 10, 30));
         content.setAlignment(Pos.CENTER);
@@ -1389,7 +1464,6 @@ public class MainFX extends Application {
         gameArea.getChildren().add(overlay);
     }
 
-    // Metodo di riserva se l'immagine non viene trovata
     private Node createFallbackCircle() {
         Circle c = new Circle(180);
         c.setFill(Color.TRANSPARENT);
@@ -1422,21 +1496,19 @@ public class MainFX extends Application {
         scrollPane.setPrefHeight(300);
         scrollPane.setPrefWidth(700);
         scrollPane.setMaxWidth(700);
-        scrollPane.setFitToWidth(true); // FIX: La scroll si adatta alla larghezza
+        scrollPane.setFitToWidth(true);
         scrollPane.setStyle("-fx-background-color: #0a0a0a;");
 
-        // GridPane unico per la tabella SHEN (5 colonne)
         GridPane itemsGrid = new GridPane();
         itemsGrid.setHgap(10);
         itemsGrid.setVgap(5);
         itemsGrid.setPadding(new Insets(5));
-        itemsGrid.setMaxWidth(Double.MAX_VALUE); // FIX: La griglia si espande
+        itemsGrid.setMaxWidth(Double.MAX_VALUE);
 
-        // Definiamo le colonne
         ColumnConstraints colIcon = new ColumnConstraints(30);
         ColumnConstraints colQty = new ColumnConstraints(40);
         ColumnConstraints colName = new ColumnConstraints();
-        colName.setHgrow(Priority.ALWAYS); // Il nome si espande per riempire lo spazio
+        colName.setHgrow(Priority.ALWAYS);
         ColumnConstraints colVal = new ColumnConstraints(80);
         ColumnConstraints colAdd = new ColumnConstraints(100);
         itemsGrid.getColumnConstraints().addAll(colIcon, colQty, colName, colVal, colAdd);
@@ -1452,44 +1524,38 @@ public class MainFX extends Application {
             int qty = entry.getValue().size();
             Ingredient sample = (Ingredient) entry.getValue().get(0);
 
-            // Sfondo riga
             HBox rowBackground = new HBox();
             rowBackground.setStyle(
                     "-fx-background-color: #2c3e50; -fx-border-color: #00bcd4; -fx-border-width: 1; -fx-border-radius: 5;");
             rowBackground.setPrefHeight(45);
             rowBackground.setMaxWidth(Double.MAX_VALUE);
-            GridPane.setFillWidth(rowBackground, true); // FIX: Sfondo si espande
+            GridPane.setFillWidth(rowBackground, true);
             itemsGrid.add(rowBackground, 0, rowIndex, 5, 1);
 
-            // Colonna 0: Icona
             Label itemIcon = new Label("");
             itemIcon.setFont(Font.font("Courier New", 22));
-            GridPane.setFillWidth(itemIcon, true); // FIX: Si espande nella cella
+            GridPane.setFillWidth(itemIcon, true);
             itemsGrid.add(itemIcon, 0, rowIndex);
 
-            // Colonna 1: Quantità
             Label quantityLabel = new Label(qty + "x");
             quantityLabel.setFont(Font.font("Courier New", FontWeight.BOLD, 16));
             quantityLabel.setTextFill(Color.WHITE);
-            GridPane.setFillWidth(quantityLabel, true); // FIX: Si espande nella cella
+            GridPane.setFillWidth(quantityLabel, true);
             itemsGrid.add(quantityLabel, 1, rowIndex);
 
-            // Colonna 2: Nome
             Label nameLabel = new Label(name);
             nameLabel.setFont(Font.font("Courier New", FontWeight.BOLD, 16));
             nameLabel.setTextFill(Color.rgb(46, 204, 113));
-            GridPane.setFillWidth(nameLabel, true); // FIX: Si espande nella cella
+            GridPane.setFillWidth(nameLabel, true);
             itemsGrid.add(nameLabel, 2, rowIndex);
 
-            // Colonna 3: Valore
             Label valueLabel = new Label("Val: " + sample.getValue());
             valueLabel.setFont(Font.font("Courier New", FontWeight.BOLD, 14));
             valueLabel.setTextFill(Color.rgb(241, 196, 15));
             valueLabel.setAlignment(Pos.CENTER);
-            GridPane.setFillWidth(valueLabel, true); // FIX: Si espande nella cella
+            GridPane.setFillWidth(valueLabel, true);
             itemsGrid.add(valueLabel, 3, rowIndex);
 
-            // Colonna 4: Pulsante Aggiungi
             HBox addBox = new HBox();
             addBox.setAlignment(Pos.CENTER);
             Button btnAdd = new Button("+ Aggiungi");
@@ -1507,7 +1573,7 @@ public class MainFX extends Application {
                 }
             });
             addBox.getChildren().add(btnAdd);
-            GridPane.setFillWidth(addBox, true); // FIX: Si espande nella cella
+            GridPane.setFillWidth(addBox, true);
             itemsGrid.add(addBox, 4, rowIndex);
 
             rowIndex++;
@@ -1543,7 +1609,6 @@ public class MainFX extends Application {
         boolean success = false;
         String resultMessage = "";
 
-        // Controllo Elisir dell'Immortalità
         if (totalValue == 628 && shenSelectedIngredients.size() == 4) {
             if (shenSelectedIngredients.get(0).getName().equals("Erba Lunare") &&
                     shenSelectedIngredients.get(1).getName().equals("Osso Corrotto") &&
@@ -1594,7 +1659,10 @@ public class MainFX extends Application {
         checkPendingLevelUp();
     }
 
-    // --- COMBATTIMENTO ---
+    // ==========================================
+    // SEZIONE: COMBATTIMENTO
+    // ==========================================
+
     private void switchToCombatMode(String monsterName) {
         inCombat = true;
         showingPotionMenu = false;
@@ -1609,13 +1677,9 @@ public class MainFX extends Application {
         btnLeft.setDisable(true);
         btnRight.setDisable(true);
 
-        // ✅ FIX: Assicuriamoci di usare l'actionBox che è effettivamente nella scena
         if (actionBox == null) {
-            // Se actionBox è null, proviamo a trovarlo in bottomControls
-            // oppure lo ricreiamo e lo aggiungiamo (rimuovendo eventuali duplicati)
             actionBox = createActionButtons();
             if (bottomControls != null) {
-                // Rimuovi eventuali vecchi actionBox per evitare duplicati
                 bottomControls.getChildren()
                         .removeIf(node -> node instanceof HBox && ((HBox) node).getChildren().stream()
                                 .anyMatch(child -> child instanceof Button && ((Button) child).getText().equals("A")));
@@ -1645,7 +1709,7 @@ public class MainFX extends Application {
         if (engine.getAlchemist().hasDiscoveredWeakness(monsterName)) {
             engine.addMessage(" Debolezza nota: " + getElementEmoji(currentMonster.getWeakness()) + " "
                     + currentMonster.getWeakness());
-            engine.addMessage("️ Resistenza nota: " + getElementEmoji(currentMonster.getResistance()) + " "
+            engine.addMessage(" Resistenza nota: " + getElementEmoji(currentMonster.getResistance()) + " "
                     + currentMonster.getResistance());
         } else {
             engine.addMessage("[Debolezza: ???] Usa 'Occulus Veritatis' per scoprirla!");
@@ -1724,33 +1788,28 @@ public class MainFX extends Application {
         if (currentMonster == null)
             return;
 
-        // 1. ✅ INIZIO TURNO: Applica veleni e aggiorna buff
         String startTurnLog = combatSystem.processStartOfTurn(engine.getAlchemist(), currentMonster);
         if (!startTurnLog.isEmpty()) {
             engine.addMessage(startTurnLog);
         }
 
-        // 2. Controlla se il mostro è morto per il veleno PRIMA dell'attacco
         if (currentMonster.isDead()) {
             engine.addMessage("🎉 " + currentMonster.getName() + " è morto per gli effetti del veleno!");
-            processMonsterVictory(); // Usa il blocco di vittoria (vedi sotto)
+            processMonsterVictory();
             return;
         }
 
-        // 3. Attacco dell'alchimista
         int damage = combatSystem.alchemistAttack(engine.getAlchemist(), currentMonster);
         engine.addMessage("⚔️ Attacco Base: infliggi " + damage + " danni a " + currentMonster.getName() + "!");
         engine.addMessage(
                 currentMonster.getName() + " HP: " + currentMonster.getHp() + "/" + currentMonster.getMaxHp());
 
-        // 4. Controlla se il mostro è morto dopo l'attacco
         if (currentMonster.isDead()) {
             engine.addMessage("🎉 Hai sconfitto " + currentMonster.getName() + "!");
             processMonsterVictory();
             return;
         }
 
-        // 5. Il mostro è ancora vivo, contrattacca
         int damageTaken = combatSystem.monsterAttack(currentMonster, engine.getAlchemist());
         engine.addMessage(currentMonster.getName() + " contrattacca! Subisci " + damageTaken + " danni.");
         engine.addMessage("I tuoi HP: " + engine.getAlchemist().getHp() + "/" + engine.getAlchemist().getMaxHp());
@@ -1767,17 +1826,14 @@ public class MainFX extends Application {
     private void processMonsterVictory() {
         int room = currentRoom - 1;
 
-        // 1. Logica specifica del Boss (Respawn)
         if (currentMonster.isBoss()) {
             bossDefeatedTimes.put(currentRoom, System.currentTimeMillis());
             int respawnMinutes = NavigationManager.getBossRespawnMinutes(currentRoom);
             engine.addMessage("⏰ Il boss impiegherà " + respawnMinutes + " minuti per rigenerarsi...");
         }
 
-        // 2. Delega a CombatSystem la gestione di Drop, Inventario e XP
         List<Item> drops = combatSystem.processVictory(engine.getAlchemist(), engine.getAlchemyBook(), currentMonster);
 
-        // 3. Mostra a schermo cosa ha droppato
         if (!drops.isEmpty()) {
             engine.addMessage("Il mostro ha droppato:");
             for (Item drop : drops) {
@@ -1785,7 +1841,6 @@ public class MainFX extends Application {
             }
         }
 
-        // 4. Aggiorna la mappa (rimuovi il mostro)
         if (currentMonster.isBoss()) {
             currentMap[room][playerX][playerY] = TileConstants.TILE_PATH;
         } else {
@@ -1794,13 +1849,11 @@ public class MainFX extends Application {
         monsters[room][playerX][playerY] = null;
         monsterNames[room][playerX][playerY] = null;
 
-        // 5. Aggiorna l'interfaccia grafica
         drawGrid();
         switchToExplorationMode();
         updateStats();
         updateDialog();
 
-        // 6. Controllo Level Up ritardato di 2 secondi
         Timeline delay = new Timeline(new KeyFrame(Duration.seconds(2), e -> checkPendingLevelUp()));
         delay.setCycleCount(1);
         delay.play();
@@ -1809,7 +1862,6 @@ public class MainFX extends Application {
     private void handleUsePotion(Potion potion) {
         Alchemist alchemist = engine.getAlchemist();
 
-        // 1. Controllo AP
         if (alchemist.getAp() < potion.getApCost()) {
             engine.addMessage("❌ AP insufficienti per " + potion.getName() + "! (Costo: " + potion.getApCost() + ")");
             updateDialog();
@@ -1818,7 +1870,6 @@ public class MainFX extends Application {
             return;
         }
 
-        // 2. Verifica bersaglio
         if (currentMonster == null) {
             currentMonster = monsters[currentRoom - 1][playerX][playerY];
         }
@@ -1829,7 +1880,6 @@ public class MainFX extends Application {
             return;
         }
 
-        // 3. Esecuzione effetto pozione
         int result = engine.getCombatSystem().usePotion(alchemist, potion, currentMonster);
         if (result == -1) {
             engine.addMessage("❌ Errore nell'uso della pozione (AP insufficienti o effetto non valido)!");
@@ -1839,13 +1889,11 @@ public class MainFX extends Application {
             return;
         }
 
-        // 4. Rimuovi la pozione dall'inventario
         alchemist.getInventory().getItems().stream()
                 .filter(i -> i.getName().equals(potion.getName()))
                 .findFirst()
                 .ifPresent(i -> alchemist.getInventory().removeItem(i));
 
-        // 5. Messaggio di successo (✅ PULITO: senza duplicazioni!)
         if (potion.getEffect().getType() == PotionEffect.EffectType.HEAL) {
             engine.addMessage(
                     "💚 Usi " + potion.getName() + "! Recuperi " + potion.getEffect().getMagnitude() + " HP!");
@@ -1864,17 +1912,13 @@ public class MainFX extends Application {
             engine.addMessage("🧪 Usi " + potion.getName() + "! Effetto applicato con successo.");
         }
 
-        // 6. Controllo morte mostro (✅ SOSTITUITO IL BLOCCO GIGANTE CON 3 RIGHE PULITE)
         if (currentMonster.isDead()) {
             engine.addMessage("🎉 Hai sconfitto " + currentMonster.getName() + " con la pozione!");
-
-            closeOverlay(); // Chiude il menu pozioni
-            processMonsterVictory(); // Delega la logica di drop, XP e mappa al metodo unico
-
-            return; // Esci, non mostrare il menu delle pozioni se il mostro è morto
+            closeOverlay();
+            processMonsterVictory();
+            return;
         }
 
-        // 7. Il mostro è vivo, contrattacca!
         int damageTaken = engine.getCombatSystem().monsterAttack(currentMonster, alchemist);
         engine.addMessage(currentMonster.getName() + " contrattacca! Subisci " + damageTaken + " danni.");
         engine.addMessage("I tuoi HP: " + alchemist.getHp() + "/" + alchemist.getMaxHp());
@@ -1885,7 +1929,6 @@ public class MainFX extends Application {
             return;
         }
 
-        // 8. Aggiorna UI e riapri il menu pozioni
         updateStats();
         updateDialog();
         handleShowPotions();
@@ -1899,14 +1942,12 @@ public class MainFX extends Application {
             return;
         }
 
-        // ✅ FIX: Blocca la fuga da QUALSIASI boss, non solo dal Guardiano
         if (currentMonster.isBoss()) {
             engine.addMessage("🚫 Impossibile fuggire da un Boss! Devi combatterlo fino alla fine!");
             updateDialog();
             return;
         }
 
-        // Logica di fuga normale per i mostri comuni
         if (Math.random() < 0.5) {
             engine.addMessage("🏃 Sei fuggito con successo!");
             playerX = 7;
@@ -1930,7 +1971,10 @@ public class MainFX extends Application {
         updateStats();
     }
 
-    // --- MOVIMENTO E MAPPA ---
+    // ==========================================
+    // SEZIONE: MOVIMENTO E INTERAZIONE
+    // ==========================================
+
     private void handleMove(String direction) {
         dialogArea.clear();
 
@@ -1963,9 +2007,6 @@ public class MainFX extends Application {
         if (newX >= 0 && newX < GRID_SIZE && newY >= 0 && newY < GRID_SIZE) {
             int targetTile = currentMap[room][newX][newY];
 
-            // ==========================================
-            // 1. GESTIONE PORTE NORMALI
-            // ==========================================
             if (targetTile == TileConstants.TILE_DOOR) {
                 NavigationManager.MoveResult result = navigationManager.handleDoor(
                         currentRoom, direction, monsters, bossDefeatedTimes);
@@ -1994,14 +2035,10 @@ public class MainFX extends Application {
                     case NORMAL_MOVE:
                     case HIDDEN_DOOR:
                     case BLOCKED:
-                        // Non dovrebbero succedere per TILE_DOOR, ma li gestiamo per completezza
                         break;
                 }
             }
 
-            // ==========================================
-            // 2. GESTIONE PORTE NASCOSTE
-            // ==========================================
             else if (targetTile == TileConstants.TILE_HIDDEN_DOOR) {
                 NavigationManager.MoveResult result = navigationManager.handleHiddenDoor(
                         currentRoom, direction, monsters, bossDefeatedTimes);
@@ -2023,14 +2060,10 @@ public class MainFX extends Application {
                     case BOSS_CONFIRMATION:
                     case HIDDEN_DOOR:
                     case BLOCKED:
-                        // Non dovrebbero succedere per TILE_HIDDEN_DOOR
                         break;
                 }
             }
 
-            // ==========================================
-            // 3. MOVIMENTO NORMALE
-            // ==========================================
             if (targetTile != TileConstants.TILE_WALL && targetTile != TileConstants.TILE_TREE) {
                 playerX = newX;
                 playerY = newY;
@@ -2145,17 +2178,14 @@ public class MainFX extends Application {
     private void handleDeath() {
         dialogArea.clear();
 
-        // 1. Delega a GameEngine la logica di gioco (penalità, reset stats, messaggi)
         engine.handlePlayerDeath();
 
-        // 2. Reset della posizione e dello stato di combattimento (Logica UI)
         currentRoom = 1;
         playerX = 7;
         playerY = 13;
         inCombat = false;
         currentMonster = null;
 
-        // 3. Aggiornamento dell'interfaccia grafica
         switchToExplorationMode();
         drawGrid();
         updateStats();
@@ -2168,13 +2198,10 @@ public class MainFX extends Application {
 
         Long defeatTime = bossDefeatedTimes.get(targetRoom);
 
-        // Il boss è vivo se: non è mai stato sconfitto (null) OPPURE è passato
-        // abbastanza tempo per il respawn
         boolean bossIsAlive = (defeatTime == null) ||
                 ((currentTime - defeatTime) >= respawnTimeMillis);
 
         if (bossIsAlive) {
-            // Boss è VIVO: messaggio di conferma
             disableControls();
 
             StackPane overlay = new StackPane();
@@ -2192,8 +2219,7 @@ public class MainFX extends Application {
             title.setFont(Font.font("Courier New", FontWeight.BOLD, 24));
             title.setTextFill(Color.rgb(231, 76, 60));
 
-            Label message = new Label(
-                    "Un'aura oscura si annida oltre questa porta...\nSei sicuro/a di voler entrare?");
+            Label message = new Label("Un'aura oscura si annida oltre questa porta...\nSei sicuro/a di voler entrare?");
             message.setFont(Font.font("Courier New", 16));
             message.setTextFill(Color.WHITE);
             message.setWrapText(true);
@@ -2228,7 +2254,6 @@ public class MainFX extends Application {
             gameArea.getChildren().add(overlay);
 
         } else {
-            // Boss è MORTO: Via libera con countdown
             disableControls();
 
             long timeSinceDefeat = currentTime - defeatTime;
@@ -2287,7 +2312,10 @@ public class MainFX extends Application {
         }
     }
 
-    // --- UI HELPERS ---
+    // ==========================================
+    // SEZIONE: RENDERING E AGGIORNAMENTO UI
+    // ==========================================
+
     private void drawGrid() {
         if (gameGrid == null)
             return;
@@ -2367,9 +2395,6 @@ public class MainFX extends Application {
         showInventoryOverlay();
     }
 
-    // (Cerca il btnClose dentro showInventoryOverlay() e metti solo questo)
-    // btnClose.setOnAction(e -> closeOverlay());
-
     private void disableControls() {
         btnUp.setDisable(true);
         btnDown.setDisable(true);
@@ -2386,100 +2411,6 @@ public class MainFX extends Application {
             btnRight.setDisable(false);
             btnA.setDisable(false);
         }
-    }
-
-    private StackPane createGameArea() {
-        StackPane area = new StackPane();
-        area.setStyle("-fx-background-color: #1a1a1a;");
-        area.setPadding(new Insets(10));
-        gameGrid = new GridPane();
-        gameGrid.setHgap(0);
-        gameGrid.setVgap(0);
-        gameGrid.setStyle("-fx-border-color: #7f8c8d; -fx-border-width: 3;");
-        StackPane.setAlignment(gameGrid, Pos.CENTER);
-        area.getChildren().add(gameGrid);
-        return area;
-    }
-
-    private HBox createBottomControls() {
-        HBox bar = new HBox(15);
-        bar.setPadding(new Insets(10)); // Padding ridotto per dare più spazio ai contenuti
-        bar.setAlignment(Pos.CENTER);
-        bar.setStyle("-fx-background-color: #34495e;");
-
-        // 1. DPad: Bloccato alla sua dimensione naturale, non si stirerà mai
-        VBox dpad = createDPad();
-        dpad.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
-
-        // 2. DialogArea: Usa le righe di testo invece dei pixel fissi
-        dialogArea = new TextArea();
-        dialogArea.setPrefRowCount(6);
-        dialogArea.setMaxHeight(140);
-        dialogArea.setEditable(false);
-        dialogArea.setWrapText(true);
-        dialogArea.setStyle(
-                "-fx-background-color: #1a1a1a; -fx-text-fill: #2ecc71; -fx-font-family: 'Courier New'; -fx-font-size: 14; -fx-control-inner-background: #1a1a1a;");
-        HBox.setHgrow(dialogArea, Priority.ALWAYS);
-
-        // 3. ActionBox: Bloccato alla sua dimensione naturale
-        HBox actionBox = createActionButtons();
-        actionBox.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
-
-        bar.getChildren().addAll(dpad, dialogArea, actionBox);
-        bar.setFillHeight(true);
-
-        return bar;
-    }
-
-    private VBox createDPad() {
-        VBox dpad = new VBox(5);
-        dpad.setAlignment(Pos.CENTER);
-
-        // ✅ AGGIUNGI QUESTA RIGA: blocca il DPad alle sue dimensioni naturali
-        dpad.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
-
-        HBox topRow = new HBox();
-        topRow.setAlignment(Pos.CENTER);
-        btnUp = createDirectionButton("▲", 60, 40); // ✅ Dimensioni originali
-        btnUp.setOnAction(e -> handleMove("nord"));
-        topRow.getChildren().add(btnUp);
-
-        HBox middleRow = new HBox(5);
-        middleRow.setAlignment(Pos.CENTER);
-        btnLeft = createDirectionButton("◀", 40, 40); // ✅ Dimensioni originali
-        btnLeft.setOnAction(e -> handleMove("ovest"));
-        btnRight = createDirectionButton("▶", 40, 40); // ✅ Dimensioni originali
-        btnRight.setOnAction(e -> handleMove("est"));
-        middleRow.getChildren().addAll(btnLeft, btnRight);
-
-        HBox bottomRow = new HBox();
-        bottomRow.setAlignment(Pos.CENTER);
-        btnDown = createDirectionButton("▼", 60, 40); // ✅ Dimensioni originali
-        btnDown.setOnAction(e -> handleMove("sud"));
-        bottomRow.getChildren().add(btnDown);
-
-        dpad.getChildren().addAll(topRow, middleRow, bottomRow);
-        return dpad;
-    }
-
-    private Button createDirectionButton(String text, int width, int height) {
-        Button btn = new Button(text);
-        btn.setPrefSize(width, height);
-        btn.setStyle(
-                "-fx-background-color: #2c3e50; -fx-text-fill: white; -fx-font-size: 20; -fx-border-color: #7f8c8d; -fx-border-radius: 5;");
-        return btn;
-    }
-
-    private HBox createActionButtons() {
-        HBox box = new HBox(15);
-        box.setAlignment(Pos.CENTER);
-        btnA = new Button("A");
-        btnA.setPrefSize(70, 70);
-        btnA.setStyle(
-                "-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-size: 28; -fx-font-weight: bold; -fx-border-radius: 35; -fx-background-radius: 35;");
-        btnA.setOnAction(e -> handleActionA());
-        box.getChildren().add(btnA);
-        return box;
     }
 
     private void handleShowPotions() {
@@ -2500,7 +2431,7 @@ public class MainFX extends Application {
 
         Label title = new Label("🧪 Inventario Pozioni");
         title.setFont(Font.font("Courier New", FontWeight.BOLD, 24));
-        title.setTextFill(Color.rgb(142, 68, 173)); // Viola
+        title.setTextFill(Color.rgb(142, 68, 173));
 
         VBox potionList = new VBox(10);
         potionList.setAlignment(Pos.CENTER);
@@ -2528,13 +2459,11 @@ public class MainFX extends Application {
                 potionBtn.setAlignment(Pos.CENTER_LEFT);
 
                 String effectText = formatPotionEffect(p.getEffect());
-                // Formattazione: Nome | Effetto | Quantità
                 potionBtn.setText(String.format(" %-22s | %-32s | x%d", p.getName(), effectText, quantity));
                 potionBtn.setFont(Font.font("Courier New", 13));
                 potionBtn.setStyle(
                         "-fx-background-color: #2c3e50; -fx-text-fill: white; -fx-padding: 10; -fx-border-color: #8e44ad; -fx-border-width: 1; -fx-border-radius: 5; -fx-background-radius: 5;");
 
-                // Hover effect
                 potionBtn.setOnMouseEntered(e -> potionBtn.setStyle(
                         "-fx-background-color: #34495e; -fx-text-fill: white; -fx-padding: 10; -fx-border-color: #ffd700; -fx-border-width: 2; -fx-border-radius: 5; -fx-background-radius: 5;"));
                 potionBtn.setOnMouseExited(e -> potionBtn.setStyle(
@@ -2559,6 +2488,10 @@ public class MainFX extends Application {
         overlay.getChildren().add(content);
         gameArea.getChildren().add(overlay);
     }
+
+    // ==========================================
+    // SEZIONE: MAIN
+    // ==========================================
 
     public static void main(String[] args) {
         launch(args);
