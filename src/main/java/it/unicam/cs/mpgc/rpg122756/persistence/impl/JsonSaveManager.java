@@ -9,17 +9,25 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
-/**
- * Implementazione di SaveManager che utilizza il formato JSON.
- */
 public class JsonSaveManager implements SaveManager {
+
+    // ==========================================
+    // SEZIONE: VARIABILI DI ISTANZA
+    // ==========================================
 
     private final Gson gson;
 
+    // ==========================================
+    // SEZIONE: COSTRUTTORE
+    // ==========================================
+
     public JsonSaveManager() {
-        // GsonBuilder per formattare il JSON in modo leggibile
         this.gson = new GsonBuilder().setPrettyPrinting().create();
     }
+
+    // ==========================================
+    // SEZIONE: METODI DI PERSISTENZA
+    // ==========================================
 
     @Override
     public void save(GameState state, String filePath) {
