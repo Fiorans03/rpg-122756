@@ -13,22 +13,23 @@ import java.util.Random;
 
 public class CombatSystem {
 
+    // ==========================================
+    // SEZIONE: VARIABILI DI ISTANZA
+    // ==========================================
+
     private final Random random = new Random();
 
-    /**
-     * Attacco base dell'Alchimista
-     */
+    // ==========================================
+    // SEZIONE: METODI DI ATTACCO BASE
+    // ==========================================
+
     public int alchemistAttack(Alchemist alchemist, Monster monster) {
-        // Formula: Attacco - (Difesa / 2) + Variazione casuale ±20%
         int baseDamage = Math.max(1, alchemist.getAttack() - (monster.getDefense() / 2));
         int finalDamage = applyVariance(baseDamage);
         monster.takeDamage(finalDamage);
         return finalDamage;
     }
 
-    /**
-     * Attacco del Mostro
-     */
     public int monsterAttack(Monster monster, Alchemist alchemist) {
         int baseDamage = Math.max(1, monster.getAttack() - (alchemist.getDefense() / 2));
         int finalDamage = applyVariance(baseDamage);
@@ -36,11 +37,10 @@ public class CombatSystem {
         return finalDamage;
     }
 
-    /**
-     * Usa una pozione in combattimento.
-     * 
-     * @return Il danno/effect generato, o 0 se fallisce.
-     */
+    // ==========================================
+    // SEZIONE: METODI DI COMBATTIMENTO AVANZATO (POZIONI)
+    // ==========================================
+
     public int usePotion(Alchemist alchemist, Potion potion, Monster target) {
         if (alchemist.getAp() < potion.getApCost()) {
             return -1;
@@ -49,7 +49,6 @@ public class CombatSystem {
         alchemist.setAp(alchemist.getAp() - potion.getApCost());
         PotionEffect effect = potion.getEffect();
 
-        // 1. GESTIONE ANALISI (BESTIARIO)
         if (effect.getType() == PotionEffect.EffectType.ANALYZE) {
             if (target != null) {
                 alchemist.addDiscoveredWeakness(target.getName());
@@ -57,7 +56,6 @@ public class CombatSystem {
             return 0;
         }
 
-        // 2. GESTIONE RECUPERO AP
         if (effect.getType() == PotionEffect.EffectType.AP_RECOVER) {
             int recoveredAp = effect.getMagnitude();
             int currentAp = alchemist.getAp();
@@ -68,29 +66,26 @@ public class CombatSystem {
 
         int damage = effect.getMagnitude();
 
-        // 3. GESTIONE DANNO ELEMENTALE
         if (target != null && effect.getType() == PotionEffect.EffectType.DAMAGE) {
             String attackElement = effect.getElement();
             String weakness = target.getWeakness();
             String resistance = target.getResistance();
 
             if (attackElement != null && attackElement.equals(weakness)) {
-                damage = (int) (damage * 1.5); // Debolezza: +50% danno
+                damage = (int) (damage * 1.5);
             } else if (attackElement != null && attackElement.equals(resistance)) {
-                damage = (int) (damage * 0.5); // Resistenza: -50% danno
+                damage = (int) (damage * 0.5);
             }
 
             target.takeDamage(damage);
             return damage;
         }
 
-        // 4. GESTIONE CURA
         if (effect.getType() == PotionEffect.EffectType.HEAL) {
             alchemist.heal(effect.getMagnitude());
             return effect.getMagnitude();
         }
 
-        // 5. GESTIONE BUFF / DEBUFF / VELENO
         if (effect.getType() == PotionEffect.EffectType.BUFF_ATTACK ||
                 effect.getType() == PotionEffect.EffectType.BUFF_DEFENSE ||
                 effect.getType() == PotionEffect.EffectType.DEBUFF_ATTACK) {
@@ -108,12 +103,19 @@ public class CombatSystem {
         return 0;
     }
 
+    // ==========================================
+    // SEZIONE: METODI DI UTILITÀ E VARIANZA
+    // ==========================================
+
     private int applyVariance(int baseDamage) {
-        // Variazione casuale tra -20% e +20%
         int variance = (int) (baseDamage * 0.2);
         int randomOffset = random.nextInt(variance * 2 + 1) - variance;
         return Math.max(1, baseDamage + randomOffset);
     }
+
+    // ==========================================
+    // SEZIONE: GESTIONE TURNI E VITTORIA
+    // ==========================================
 
     public CombatResult resolveVictory(Monster monster, Alchemist alchemist) {
         int xpGained = monster.getXpReward();
@@ -121,6 +123,42 @@ public class CombatSystem {
         List<Item> droppedItems = monster.dropItems();
         return new CombatResult(xpGained, droppedItems);
     }
+
+    public String processStartOfTurn(Alchemist alchemist, Monster monster) {
+        StringBuilder log = new StringBuilder();
+
+        int alchDamage = alchemist.tickEffects();
+        if (alchDamage > 0) {
+            log.append("☠️ ").append(alchemist.getName()).append(" subisce ").append(alchDamage)
+                    .append(" danni da veleno! ");
+        }
+
+        int monsterDamage = monster.tickEffects();
+        if (monsterDamage > 0) {
+            log.append("☠️ ").append(monster.getName()).append(" subisce ").append(monsterDamage)
+                    .append(" danni da veleno! ");
+        }
+
+        return log.toString().trim();
+    }
+
+    public List<Item> processVictory(Alchemist alchemist, AlchemyBook book, Monster monster) {
+        List<Item> drops = monster.dropItems();
+
+        for (Item drop : drops) {
+            alchemist.getInventory().addItem(drop);
+            if (drop instanceof Ingredient) {
+                book.discoverIngredient(drop.getName());
+            }
+        }
+
+        alchemist.addExperience(monster.getXpReward());
+        return drops;
+    }
+
+    // ==========================================
+    // SEZIONE: CLASSI INTERNE
+    // ==========================================
 
     public static class CombatResult {
         private final int xpGained;
@@ -138,37 +176,5 @@ public class CombatSystem {
         public List<Item> getDroppedItems() {
             return droppedItems;
         }
-    }
-
-    public String processStartOfTurn(Alchemist alchemist, Monster monster) {
-        StringBuilder log = new StringBuilder();
-
-        // 1. Effetti sull'Alchimista
-        int alchDamage = alchemist.tickEffects();
-        if (alchDamage > 0) {
-            log.append("☠️ ").append(alchemist.getName()).append(" subisce ").append(alchDamage).append(" danni da veleno! ");
-        }
-
-        // 2. Effetti sul Mostro
-        int monsterDamage = monster.tickEffects();
-        if (monsterDamage > 0) {
-            log.append("☠️ ").append(monster.getName()).append(" subisce ").append(monsterDamage).append(" danni da veleno! ");
-        }
-
-        return log.toString().trim();
-    }
-
-    public List<Item> processVictory(Alchemist alchemist, AlchemyBook book, Monster monster) {
-        List<Item> drops = monster.dropItems();
-        
-        for (Item drop : drops) {
-            alchemist.getInventory().addItem(drop);
-            if (drop instanceof Ingredient) {
-                book.discoverIngredient(drop.getName());
-            }
-        }
-        
-        alchemist.addExperience(monster.getXpReward());
-        return drops;
     }
 }
