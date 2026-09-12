@@ -3,23 +3,31 @@ package it.unicam.cs.mpgc.rpg122756.model.world;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Rappresenta un singolo livello (piano) del dungeon.
- * Contiene la mappa delle stanze e definisce la stanza di inizio e quella del boss.
- */
 public class DungeonLevel {
-    
+
+    // ==========================================
+    // SEZIONE: VARIABILI DI ISTANZA
+    // ==========================================
+
     private final int levelNumber;
     private final String themeName;
     private final Map<String, Room> rooms;
     private Room startRoom;
     private Room bossRoom;
 
+    // ==========================================
+    // SEZIONE: COSTRUTTORE
+    // ==========================================
+
     public DungeonLevel(int levelNumber, String themeName) {
         this.levelNumber = levelNumber;
         this.themeName = themeName;
         this.rooms = new HashMap<>();
     }
+
+    // ==========================================
+    // SEZIONE: METODI DI GESTIONE STANZE
+    // ==========================================
 
     public void addRoom(Room room) {
         rooms.put(room.getId(), room);
@@ -37,6 +45,10 @@ public class DungeonLevel {
         this.bossRoom = room;
     }
 
+    // ==========================================
+    // SEZIONE: METODI GETTER E CONSULTAZIONE
+    // ==========================================
+
     public Room getStartRoom() {
         return startRoom;
     }
@@ -45,12 +57,14 @@ public class DungeonLevel {
         return bossRoom;
     }
 
-    public int getLevelNumber() { return levelNumber; }
-    public String getThemeName() { return themeName; }
+    public int getLevelNumber() {
+        return levelNumber;
+    }
 
-    /**
-     * Verifica se il livello è stato completato (boss sconfitto).
-     */
+    public String getThemeName() {
+        return themeName;
+    }
+
     public boolean isCompleted() {
         return bossRoom != null && bossRoom.isCleared();
     }
