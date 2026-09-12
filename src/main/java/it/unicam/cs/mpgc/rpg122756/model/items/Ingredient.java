@@ -1,15 +1,19 @@
 package it.unicam.cs.mpgc.rpg122756.model.items;
 
-// FIX: Usa "extends" perché Item è una classe, non un'interfaccia!
 public class Ingredient extends Item {
 
+    // ==========================================
+    // SEZIONE: COSTRUTTORE
+    // ==========================================
+
     public Ingredient(String name, String description, int value, int quantity) {
-        // Chiama il costruttore della classe padre (Item)
         super(name, description, value, quantity);
     }
 
-    // Questi override sono opzionali se Item li ha già pubblici,
-    // ma li mettiamo per sicurezza e per soddisfare il compilatore
+    // ==========================================
+    // SEZIONE: METODI GETTER (OVERRIDE)
+    // ==========================================
+
     @Override
     public String getName() {
         return super.getName();
@@ -25,8 +29,6 @@ public class Ingredient extends Item {
         return super.getValue();
     }
 
-    // FIX: Mappa getSlots() a getQuantity() (o viceversa, a seconda di come l'hai
-    // chiamato in Item)
     @Override
     public int getSlots() {
         return super.getQuantity();
