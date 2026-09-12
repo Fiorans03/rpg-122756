@@ -95,7 +95,6 @@ public class MainFX extends Application {
     private List<Ingredient> shenSelectedIngredients = new ArrayList<>();
     private double inventoryScrollPos = 0.0;
     private ScrollPane currentInventoryScroll;
-    private static final long BOSS_RESPAWN_MINUTES = 30;
     private int maxShenSlots = 4;
     private java.util.Map<Integer, Long> bossDefeatedTimes = new java.util.HashMap<>();
     private ThemeManager themeManager = new ThemeManager();
@@ -409,7 +408,7 @@ public class MainFX extends Application {
     // --- INIZIALIZZAZIONE DELLE STANZE ---
     private void initializeAllRooms() {
         mapLayoutBuilder = new MapLayoutBuilder(currentMap, monsters, monsterNames, itemsOnMap, itemNames, GRID_SIZE,
-                random, engine);
+                random, engine, bossDefeatedTimes);
         for (int room = 0; room < currentMap.length; room++) {
             for (int x = 0; x < GRID_SIZE; x++) {
                 for (int y = 0; y < GRID_SIZE; y++) {
@@ -440,69 +439,9 @@ public class MainFX extends Application {
     }
 
     private void respawnMonstersAndItems() {
-        for (int room = 0; room <= 1; room++) {
-            List<Monster> monsterPool = Arrays.asList(
-                    new Monster("Ragno Velenoso", 40, 8, 3, 25,
-                            Arrays.asList(new Ingredient("Tela di Ragno", "Appiccicosa", 19, 1)),
-                            "Fuoco", false),
-                    new Monster("Lupo Mannaro", 60, 12, 5, 35,
-                            Arrays.asList(new Ingredient("Zanna di Lupo", "Affilata", 23, 1)),
-                            "Luce", false),
-                    new Monster("Folletto Dispettoso", 30, 6, 2, 20,
-                            Arrays.asList(new Ingredient("Polvere di Folletto", "Scintillante", 13, 1)),
-                            "Luce", false));
+        mapLayoutBuilder.respawnAllRooms();
 
-            List<String[]> availableItems = Arrays.asList(
-                    new String[] { "Erba Lunare", "Erba che brilla.", "11" },
-                    new String[] { "Lucciola Argentea", "Luce tenue.", "17" },
-                    new String[] { "Radice Secca", "Materiale base.", "7" });
-
-            int existingMonsters = 0;
-            int existingItems = 0;
-            for (int x = 1; x < GRID_SIZE - 1; x++) {
-                for (int y = 1; y < GRID_SIZE - 1; y++) {
-                    if (currentMap[room][x][y] == TileConstants.TILE_MONSTER)
-                        existingMonsters++;
-                    if (currentMap[room][x][y] == TileConstants.TILE_ITEM)
-                        existingItems++;
-                }
-            }
-
-            int targetMonsters = (room == 0) ? 2 : 6;
-            while (existingMonsters < targetMonsters) {
-                int x, y;
-                do {
-                    x = 2 + random.nextInt(GRID_SIZE - 4);
-                    y = 2 + random.nextInt(GRID_SIZE - 4);
-                } while (currentMap[room][x][y] != TileConstants.TILE_GRASS);
-
-                currentMap[room][x][y] = TileConstants.TILE_MONSTER;
-                Monster baseMonster = monsterPool.get(random.nextInt(monsterPool.size()));
-                monsters[room][x][y] = new Monster(baseMonster.getName(), baseMonster.getMaxHp(),
-                        baseMonster.getAttack(), baseMonster.getDefense(),
-                        baseMonster.getXpReward(), baseMonster.getPossibleDrops(),
-                        baseMonster.getWeakness(), false);
-                monsterNames[room][x][y] = baseMonster.getName();
-                existingMonsters++;
-            }
-
-            int targetItems = (room == 0) ? 2 : 6;
-            while (existingItems < targetItems) {
-                int x, y;
-                do {
-                    x = 2 + random.nextInt(GRID_SIZE - 4);
-                    y = 2 + random.nextInt(GRID_SIZE - 4);
-                } while (currentMap[room][x][y] != TileConstants.TILE_GRASS);
-
-                currentMap[room][x][y] = TileConstants.TILE_ITEM;
-                String[] itemData = availableItems.get(random.nextInt(availableItems.size()));
-                itemNames[room][x][y] = itemData[0];
-                itemsOnMap[room][x][y] = new Ingredient(itemData[0], itemData[1], Integer.parseInt(itemData[2]), 1);
-                existingItems++;
-            }
-        }
-
-        if (currentRoom <= 2) {
+        if (currentRoom <= 9) {
             drawGrid();
         }
     }
@@ -1831,7 +1770,8 @@ public class MainFX extends Application {
         // 1. Logica specifica del Boss (Respawn)
         if (currentMonster.isBoss()) {
             bossDefeatedTimes.put(currentRoom, System.currentTimeMillis());
-            engine.addMessage("⏰ Il boss impiegherà " + BOSS_RESPAWN_MINUTES + " minuti per rigenerarsi...");
+            int respawnMinutes = NavigationManager.getBossRespawnMinutes(currentRoom);
+            engine.addMessage("⏰ Il boss impiegherà " + respawnMinutes + " minuti per rigenerarsi...");
         }
 
         // 2. Delega a CombatSystem la gestione di Drop, Inventario e XP
@@ -2224,10 +2164,8 @@ public class MainFX extends Application {
 
     private void showBossEntranceConfirmation(int targetRoom, int spawnX, int spawnY) {
         long currentTime = System.currentTimeMillis();
-        long respawnTimeMillis = BOSS_RESPAWN_MINUTES * 60 * 1000;
+        long respawnTimeMillis = NavigationManager.getBossRespawnMinutes(targetRoom) * 60 * 1000;
 
-        // ✅ FIX: Controlla il tempo di sconfitta DELLO SPECIFICO boss della stanza
-        // targetRoom
         Long defeatTime = bossDefeatedTimes.get(targetRoom);
 
         // Il boss è vivo se: non è mai stato sconfitto (null) OPPURE è passato
@@ -2294,8 +2232,9 @@ public class MainFX extends Application {
             disableControls();
 
             long timeSinceDefeat = currentTime - defeatTime;
-            long minutesLeft = BOSS_RESPAWN_MINUTES - (timeSinceDefeat / (60 * 1000));
-            long secondsLeft = 60 - ((timeSinceDefeat / 1000) % 60);
+            long totalSecondsLeft = (respawnTimeMillis - timeSinceDefeat) / 1000;
+            long minutesLeft = totalSecondsLeft / 60;
+            long secondsLeft = totalSecondsLeft % 60;
 
             StackPane overlay = new StackPane();
             overlay.setStyle("-fx-background-color: rgba(0,0,0,0.9);");
@@ -2420,13 +2359,11 @@ public class MainFX extends Application {
         enableControls();
     }
 
-    // FIX: Refresh inventario pulito
     private void refreshInventoryOverlay() {
         if (currentOverlay != null) {
             gameArea.getChildren().remove(currentOverlay);
             currentOverlay = null;
         }
-        // Riapre l'inventario da zero senza resettare i controlli
         showInventoryOverlay();
     }
 

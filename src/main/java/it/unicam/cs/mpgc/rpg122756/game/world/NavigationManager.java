@@ -93,10 +93,9 @@ public class NavigationManager {
             return MoveResult.ROOM_CHANGE;
         }
         if (currentRoom == 7 && direction.equals("sud")) {
-            // ✅ TORNANDO ALLA TANA DEL GOLEM: controlla stato boss
             targetRoom = 6;
             targetX = 7;
-            targetY = 12;
+            targetY = 2;
             message = getBossRoomMessage(6, monsters, bossDefeatedTimes);
             return MoveResult.ROOM_CHANGE;
         }
@@ -203,35 +202,32 @@ public class NavigationManager {
     // ==========================================
     // METODO HELPER: Calcola il messaggio per le stanze dei boss
     // ==========================================
-    private String getBossRoomMessage(int bossRoom, Monster[][][] monsters, Map<Integer, Long> bossDefeatedTimes) {
+        private String getBossRoomMessage(int bossRoom, Monster[][][] monsters, Map<Integer, Long> bossDefeatedTimes) {
         int bossIndex = bossRoom - 1;
         int bossX = 7;
         int bossY = 4;
-
+        
         String bossName = getBossName(bossRoom);
-
-        // Boss vivo (non ancora sconfitto o respawnato)
+        
         if (monsters[bossIndex][bossX][bossY] != null && !monsters[bossIndex][bossX][bossY].isDead()) {
             return "⚠️ " + bossName + " è nella sua tana! Preparati al combattimento!";
         }
-
-        // Controlla se è stato sconfitto di recente
+        
         Long defeatTime = bossDefeatedTimes.get(bossRoom);
         if (defeatTime != null) {
             long currentTime = System.currentTimeMillis();
-            long respawnTimeMillis = BOSS_RESPAWN_MINUTES * 60 * 1000;
+            long respawnTimeMillis = getBossRespawnMinutes(bossRoom) * 60 * 1000;
             long timeSinceDefeat = currentTime - defeatTime;
-
+            
             if (timeSinceDefeat < respawnTimeMillis) {
-                // Boss morto, in fase di respawn
-                long minutesLeft = BOSS_RESPAWN_MINUTES - (timeSinceDefeat / (60 * 1000));
-                long secondsLeft = 60 - ((timeSinceDefeat / 1000) % 60);
-                return "⚠️ " + bossName + " si sta rigenerando!\nTempo rimanente: " +
-                        String.format("%02d:%02d", minutesLeft, secondsLeft);
+                long totalSecondsLeft = (respawnTimeMillis - timeSinceDefeat) / 1000;
+                long minutesLeft = totalSecondsLeft / 60;
+                long secondsLeft = totalSecondsLeft % 60;
+                return "⚠️ " + bossName + " si sta rigenerando!\nTempo rimanente: " + 
+                       String.format("%02d:%02d", minutesLeft, secondsLeft);
             }
         }
-
-        // Boss respawnato (torna ad essere "vivo" logicamente)
+        
         return "🚪 Ritorni verso la tana di " + bossName + "...";
     }
 
@@ -259,6 +255,19 @@ public class NavigationManager {
 
     public int getTargetY() {
         return targetY;
+    }
+
+    public static int getBossRespawnMinutes(int bossRoom) {
+        switch (bossRoom) {
+            case 3:
+                return 30;
+            case 6:
+                return 60;
+            case 9:
+                return 120;
+            default:
+                return 30;
+        }
     }
 
     public String getMessage() {

@@ -22,11 +22,12 @@ public class MapLayoutBuilder {
     private final int GRID_SIZE;
     private final Random random;
     private final GameEngine engine;
+    private final java.util.Map<Integer, Long> bossDefeatedTimes;
 
-    public MapLayoutBuilder(int[][][] currentMap, Monster[][][] monsters, 
-                            String[][][] monsterNames, Item[][][] itemsOnMap, 
-                            String[][][] itemNames, int GRID_SIZE, Random random,
-                            GameEngine engine) {
+    public MapLayoutBuilder(int[][][] currentMap, Monster[][][] monsters,
+            String[][][] monsterNames, Item[][][] itemsOnMap,
+            String[][][] itemNames, int GRID_SIZE, Random random,
+            GameEngine engine, java.util.Map<Integer, Long> bossDefeatedTimes) {
         this.currentMap = currentMap;
         this.monsters = monsters;
         this.monsterNames = monsterNames;
@@ -35,6 +36,7 @@ public class MapLayoutBuilder {
         this.GRID_SIZE = GRID_SIZE;
         this.random = random;
         this.engine = engine;
+        this.bossDefeatedTimes = bossDefeatedTimes;
     }
 
     public void initializeRoom1() {
@@ -114,7 +116,6 @@ public class MapLayoutBuilder {
                 new String[] { "Erba Lunare", "Erba che brilla.", "11" },
                 new String[] { "Lucciola Argentea", "Luce tenue.", "17" },
                 new String[] { "Radice Secca", "Materiale base.", "7" });
-
         int numItemsRoom1 = 1 + random.nextInt(2);
         for (int i = 0; i < numItemsRoom1; i++) {
             int x, y;
@@ -856,7 +857,7 @@ public class MapLayoutBuilder {
         }
 
         // 7. Piazzamento BOSS: Basilisco della Palude
-        currentMap[room][7][4] = TileConstants.TILE_MONSTER;
+        currentMap[room][7][4] = TileConstants.TILE_BOSS;
 
         List<Item> dropsBasilisco = Arrays.asList(
                 new Ingredient("Zanna di Serpente", "", 45, 1),
@@ -899,5 +900,217 @@ public class MapLayoutBuilder {
             }
         }
         return false;
+    }
+
+    // ==========================================
+    // RESPAWN MOSTRI E ITEM (Sistema scalabile per tutti i piani)
+    // ==========================================
+
+    public void respawnAllRooms() {
+        for (int roomIndex = 0; roomIndex < 9; roomIndex++) {
+            respawnRoom(roomIndex);
+        }
+    }
+
+    private void respawnRoom(int roomIndex) {
+        // Stanze BOSS (indici 2, 5, 8)
+        if (roomIndex == 2 || roomIndex == 5 || roomIndex == 8) {
+            respawnBoss(roomIndex);
+            return;
+        }
+
+        // Stanze normali
+        List<Monster> monsterPool = getMonsterPoolForRoom(roomIndex);
+        List<String[]> availableItems = getItemPoolForRoom(roomIndex);
+
+        if (monsterPool.isEmpty() || availableItems.isEmpty()) {
+            return;
+        }
+
+        int existingMonsters = 0;
+        int existingItems = 0;
+        for (int x = 1; x < GRID_SIZE - 1; x++) {
+            for (int y = 1; y < GRID_SIZE - 1; y++) {
+                if (currentMap[roomIndex][x][y] == TileConstants.TILE_MONSTER)
+                    existingMonsters++;
+                if (currentMap[roomIndex][x][y] == TileConstants.TILE_ITEM)
+                    existingItems++;
+            }
+        }
+
+        boolean isMonsterRoom = (roomIndex == 1 || roomIndex == 4 || roomIndex == 7);
+        int targetMonsters = isMonsterRoom ? 6 : 2;
+        int targetItems = isMonsterRoom ? 6 : 2;
+
+        while (existingMonsters < targetMonsters) {
+            int x, y;
+            do {
+                x = 2 + random.nextInt(GRID_SIZE - 4);
+                y = 2 + random.nextInt(GRID_SIZE - 4);
+            } while (currentMap[roomIndex][x][y] != TileConstants.TILE_GRASS);
+
+            currentMap[roomIndex][x][y] = TileConstants.TILE_MONSTER;
+            Monster baseMonster = monsterPool.get(random.nextInt(monsterPool.size()));
+            monsters[roomIndex][x][y] = new Monster(baseMonster.getName(), baseMonster.getMaxHp(),
+                    baseMonster.getAttack(), baseMonster.getDefense(),
+                    baseMonster.getXpReward(), baseMonster.getPossibleDrops(),
+                    baseMonster.getWeakness(), false);
+            monsterNames[roomIndex][x][y] = baseMonster.getName();
+            existingMonsters++;
+        }
+
+        while (existingItems < targetItems) {
+            int x, y;
+            do {
+                x = 2 + random.nextInt(GRID_SIZE - 4);
+                y = 2 + random.nextInt(GRID_SIZE - 4);
+            } while (currentMap[roomIndex][x][y] != TileConstants.TILE_GRASS);
+
+            currentMap[roomIndex][x][y] = TileConstants.TILE_ITEM;
+            String[] itemData = availableItems.get(random.nextInt(availableItems.size()));
+            itemNames[roomIndex][x][y] = itemData[0];
+            itemsOnMap[roomIndex][x][y] = new Ingredient(itemData[0], itemData[1], Integer.parseInt(itemData[2]), 1);
+            existingItems++;
+        }
+    }
+
+    // ==========================================
+    // RESPAWN BOSS (Controlla il timer)
+    // ==========================================
+    private void respawnBoss(int bossRoomIndex) {
+        int bossRoom = bossRoomIndex + 1;
+        int bossX = 7;
+        int bossY = 4;
+
+        if (monsters[bossRoomIndex][bossX][bossY] != null && !monsters[bossRoomIndex][bossX][bossY].isDead()) {
+            return;
+        }
+
+        Long defeatTime = bossDefeatedTimes.get(bossRoom);
+        if (defeatTime != null) {
+            long currentTime = System.currentTimeMillis();
+            long respawnTimeMillis = getBossRespawnMinutes(bossRoom) * 60 * 1000;
+            long timeSinceDefeat = currentTime - defeatTime;
+
+            if (timeSinceDefeat < respawnTimeMillis) {
+                return;
+            }
+        }
+
+        Monster boss = createBossForRoom(bossRoomIndex);
+        if (boss != null) {
+            monsters[bossRoomIndex][bossX][bossY] = boss;
+            monsterNames[bossRoomIndex][bossX][bossY] = boss.getName();
+            currentMap[bossRoomIndex][bossX][bossY] = TileConstants.TILE_BOSS;
+            bossDefeatedTimes.remove(bossRoom);
+        }
+    }
+
+    // ==========================================
+    // CREA IL BOSS PER OGNI STANZA BOSS
+    // ==========================================
+    private Monster createBossForRoom(int bossRoomIndex) {
+        switch (bossRoomIndex) {
+            case 2:
+                return new Monster("Guardiano della Foresta", 150, 20, 10, 200,
+                        Arrays.asList(new Ingredient("Cuore della Foresta", "Pulsante di energia vitale", 53, 1)),
+                        "Fuoco", true);
+            case 5:
+                return new Monster("Golem di Pietra", 250, 30, 20, 400,
+                        Arrays.asList(new Ingredient("Nucleo di Pietra", "Cuore di roccia", 71, 1)),
+                        "Acqua", true);
+            case 8:
+                return new Monster("Basilisco della Palude", 350, 40, 25, 600,
+                        Arrays.asList(new Ingredient("Occhio di Basilisco", "Pietrifica", 89, 1)),
+                        "Luce", true);
+            default:
+                return null;
+        }
+    }
+
+    // ==========================================
+    // TEMPI DI RESPAWN DEI BOSS (minuti)
+    // ==========================================
+    public static int getBossRespawnMinutes(int bossRoom) {
+        switch (bossRoom) {
+            case 3:
+                return 30; // Guardiano della Foresta: 30 minuti
+            case 6:
+                return 60; // Golem di Pietra: 1 ora
+            case 9:
+                return 120; // Basilisco della Palude: 2 ore
+            default:
+                return 30;
+        }
+    }
+
+    // ==========================================
+    // POOL DI MOSTRI PER OGNI PIANO
+    // ==========================================
+    private List<Monster> getMonsterPoolForRoom(int roomIndex) {
+        if (roomIndex == 0 || roomIndex == 1) {
+            return Arrays.asList(
+                    new Monster("Ragno Velenoso", 40, 8, 3, 25,
+                            Arrays.asList(new Ingredient("Tela di Ragno", "Appiccicosa", 19, 1)),
+                            "Fuoco", false),
+                    new Monster("Lupo Mannaro", 60, 12, 5, 35,
+                            Arrays.asList(new Ingredient("Zanna di Lupo", "Affilata", 23, 1)),
+                            "Luce", false),
+                    new Monster("Folletto Dispettoso", 30, 6, 2, 20,
+                            Arrays.asList(new Ingredient("Polvere di Folletto", "Scintillante", 13, 1)),
+                            "Luce", false));
+        }
+        if (roomIndex == 3 || roomIndex == 4) {
+            return Arrays.asList(
+                    new Monster("Pipistrello Gigante", 50, 10, 4, 30,
+                            Arrays.asList(new Ingredient("Guano di Pipistrello", "Puzzolente", 41, 1)),
+                            "Luce", false),
+                    new Monster("Ratto delle Fogne", 35, 8, 3, 20,
+                            Arrays.asList(new Ingredient("Dente di Ratto", "Affilato", 43, 1)),
+                            "Fuoco", false),
+                    new Monster("Golem di Pietra Minore", 70, 14, 8, 40,
+                            Arrays.asList(new Ingredient("Scheggia di Pietra", "Dura", 47, 1)),
+                            "Acqua", false));
+        }
+        if (roomIndex == 6 || roomIndex == 7) {
+            return Arrays.asList(
+                    new Monster("Rana Velenosa", 45, 9, 4, 28,
+                            Arrays.asList(new Ingredient("Fungo Velenoso", "Tossico", 37, 1)),
+                            "Terra", false),
+                    new Monster("Serpente Palustre", 55, 11, 5, 32,
+                            Arrays.asList(new Ingredient("Bile di Serpente", "Viscida", 39, 1)),
+                            "Fuoco", false),
+                    new Monster("Non-morto Affogato", 65, 13, 6, 38,
+                            Arrays.asList(new Ingredient("Osso Corrotto", "Infetto", 45, 1)),
+                            "Luce", false));
+        }
+        return Arrays.asList();
+    }
+
+    // ==========================================
+    // POOL DI ITEM PER OGNI PIANO
+    // ==========================================
+    private List<String[]> getItemPoolForRoom(int roomIndex) {
+        if (roomIndex == 0 || roomIndex == 1) {
+            return Arrays.asList(
+                    new String[] { "Erba Lunare", "Erba che brilla.", "11" },
+                    new String[] { "Lucciola Argentea", "Luce tenue.", "17" },
+                    new String[] { "Radice Secca", "Materiale base.", "7" });
+        }
+        if (roomIndex == 3 || roomIndex == 4) {
+            return Arrays.asList(
+                    new String[] { "Fungo Velenoso", "Fungo tossico.", "37" },
+                    new String[] { "Guano di Pipistrello", "Sostanza puzzolente.", "41" },
+                    new String[] { "Dente di Ratto", "Dente affilato.", "43" },
+                    new String[] { "Scheggia di Pietra", "Pietra dura.", "47" });
+        }
+        if (roomIndex == 6 || roomIndex == 7) {
+            return Arrays.asList(
+                    new String[] { "Fungo Velenoso", "Fungo tossico.", "37" },
+                    new String[] { "Bile di Serpente", "Liquido viscido.", "39" },
+                    new String[] { "Osso Corrotto", "Osso infetto.", "45" },
+                    new String[] { "Liquido Instabile", "Sostanza volatile.", "49" });
+        }
+        return Arrays.asList();
     }
 }
