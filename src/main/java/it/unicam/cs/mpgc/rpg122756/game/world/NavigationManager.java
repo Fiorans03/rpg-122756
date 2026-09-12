@@ -5,6 +5,10 @@ import java.util.Map;
 
 public class NavigationManager {
 
+    // ==========================================
+    // SEZIONE: COSTANTI E ENUM
+    // ==========================================
+
     public static final long BOSS_RESPAWN_MINUTES = 30;
 
     public enum MoveResult {
@@ -16,10 +20,18 @@ public class NavigationManager {
         BLOCKED
     }
 
+    // ==========================================
+    // SEZIONE: VARIABILI DI ISTANZA
+    // ==========================================
+
     private int targetRoom;
     private int targetX;
     private int targetY;
     private String message;
+
+    // ==========================================
+    // SEZIONE: GESTIONE PORTE E NAVIGAZIONE
+    // ==========================================
 
     public MoveResult handleDoor(int currentRoom, String direction, Monster[][][] monsters,
             Map<Integer, Long> bossDefeatedTimes) {
@@ -28,9 +40,6 @@ public class NavigationManager {
         targetY = 0;
         message = "";
 
-        // ==========================================
-        // LIVELLO 1: FORESTA
-        // ==========================================
         if (currentRoom == 1 && direction.equals("nord")) {
             targetRoom = 2;
             targetX = 7;
@@ -50,11 +59,7 @@ public class NavigationManager {
             return MoveResult.BOSS_CONFIRMATION;
         }
 
-        // ==========================================
-        // LIVELLO 2: CAVERNE
-        // ==========================================
         if (currentRoom == 4 && direction.equals("sud")) {
-            // ✅ TORNANDO ALLA TANA DEL GUARDIANO: controlla stato boss
             targetRoom = 3;
             targetX = 7;
             targetY = 2;
@@ -82,9 +87,6 @@ public class NavigationManager {
             return MoveResult.BOSS_CONFIRMATION;
         }
 
-        // ==========================================
-        // LIVELLO 3: PALUDE
-        // ==========================================
         if (currentRoom == 7 && direction.equals("nord")) {
             targetRoom = 8;
             targetX = 7;
@@ -140,9 +142,6 @@ public class NavigationManager {
         int bossX = 7;
         int bossY = 4;
 
-        // ==========================================
-        // Stanza 3 (Boss Guardiano)
-        // ==========================================
         if (currentRoom == 3 && direction.equals("sud")) {
             if (monsters[2][bossX][bossY] != null && !monsters[2][bossX][bossY].isDead()) {
                 message = "🔒 Impossibile fuggire, un'aura schiacciante vieta la fuga!";
@@ -168,9 +167,6 @@ public class NavigationManager {
             }
         }
 
-        // ==========================================
-        // Stanza 6 (Boss Golem)
-        // ==========================================
         if (currentRoom == 6 && direction.equals("sud")) {
             if (monsters[5][bossX][bossY] != null && !monsters[5][bossX][bossY].isDead()) {
                 message = "🔒 Il Golem di Pietra blocca l'uscita! Sconfiggilo prima!";
@@ -200,34 +196,35 @@ public class NavigationManager {
     }
 
     // ==========================================
-    // METODO HELPER: Calcola il messaggio per le stanze dei boss
+    // SEZIONE: METODI DI UTILITÀ E HELPER
     // ==========================================
-        private String getBossRoomMessage(int bossRoom, Monster[][][] monsters, Map<Integer, Long> bossDefeatedTimes) {
+
+    private String getBossRoomMessage(int bossRoom, Monster[][][] monsters, Map<Integer, Long> bossDefeatedTimes) {
         int bossIndex = bossRoom - 1;
         int bossX = 7;
         int bossY = 4;
-        
+
         String bossName = getBossName(bossRoom);
-        
+
         if (monsters[bossIndex][bossX][bossY] != null && !monsters[bossIndex][bossX][bossY].isDead()) {
             return "⚠️ " + bossName + " è nella sua tana! Preparati al combattimento!";
         }
-        
+
         Long defeatTime = bossDefeatedTimes.get(bossRoom);
         if (defeatTime != null) {
             long currentTime = System.currentTimeMillis();
             long respawnTimeMillis = getBossRespawnMinutes(bossRoom) * 60 * 1000;
             long timeSinceDefeat = currentTime - defeatTime;
-            
+
             if (timeSinceDefeat < respawnTimeMillis) {
                 long totalSecondsLeft = (respawnTimeMillis - timeSinceDefeat) / 1000;
                 long minutesLeft = totalSecondsLeft / 60;
                 long secondsLeft = totalSecondsLeft % 60;
-                return "⚠️ " + bossName + " si sta rigenerando!\nTempo rimanente: " + 
-                       String.format("%02d:%02d", minutesLeft, secondsLeft);
+                return "⚠️ " + bossName + " si sta rigenerando!\nTempo rimanente: " +
+                        String.format("%02d:%02d", minutesLeft, secondsLeft);
             }
         }
-        
+
         return "🚪 Ritorni verso la tana di " + bossName + "...";
     }
 
@@ -244,7 +241,10 @@ public class NavigationManager {
         }
     }
 
-    // Getters
+    // ==========================================
+    // SEZIONE: GETTER
+    // ==========================================
+
     public int getTargetRoom() {
         return targetRoom;
     }
@@ -255,6 +255,10 @@ public class NavigationManager {
 
     public int getTargetY() {
         return targetY;
+    }
+
+    public String getMessage() {
+        return message;
     }
 
     public static int getBossRespawnMinutes(int bossRoom) {
@@ -268,9 +272,5 @@ public class NavigationManager {
             default:
                 return 30;
         }
-    }
-
-    public String getMessage() {
-        return message;
     }
 }
