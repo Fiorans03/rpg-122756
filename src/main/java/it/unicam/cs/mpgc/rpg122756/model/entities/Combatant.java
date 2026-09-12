@@ -1,17 +1,26 @@
 package it.unicam.cs.mpgc.rpg122756.model.entities;
 
-/**
- * Interfaccia per tutte le entità che possono partecipare a un combattimento.
- * Rispetta il principio di Interface Segregation (SOLID).
- */
 public interface Combatant {
-    
+
+    // ==========================================
+    // SEZIONE: METODI GETTER (ACCESSORI)
+    // ==========================================
+
     String getName();
+
     int getHp();
+
     int getMaxHp();
+
     int getAttack();
+
     int getDefense();
-    
+
+    // ==========================================
+    // SEZIONE: METODI DI AZIONE E STATO
+    // ==========================================
+
     void takeDamage(int damage);
+
     boolean isDead();
 }
